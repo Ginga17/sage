@@ -1,0 +1,30 @@
+Dynamically Iterate through the treedecomp
+
+
+// Check tree decomp is a valid tree decomp
+
+If No Children
+	If length(bag) == 1:
+		Is a Leaf Node, return Bag
+	return bag with a child forget node (Node has one vertex dropped)
+elif 1 Child:
+	c = count (common vertices in the 2 bags)
+	if (c==length(bag) == length(node(bag)):
+		nodes have identical bags
+		Transfer children from child to parent
+	// Drop or gain a vertex appropriately
+	If length(bag) + length(child(bag) - 2*c <=1:
+		Either a forget or Introduce node already
+
+	if length(bag) + 
+
+else 2 Children:
+
+	If 2 children are identical:
+		Return bag, node is already an introduce node
+
+	else:
+		return Node(bag = bag, left:Node(bag:bag,leftChild:leftChild,rightChild:rightChild))
+		// bag with 2 children which are identical to the bag. each child having one of those
+
+
