@@ -432,6 +432,10 @@ def _from_tree_decompositions_of_atoms_to_tree_decomposition(T_atoms, cliques):
     return T
 
 
+def nicetreewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
+    G = treewidth(g, k, kmin=, certificate, algorithm)
+    return G
+
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
     r"""
     Compute the treewidth of `g` (and provide a decomposition).
