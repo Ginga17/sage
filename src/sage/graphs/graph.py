@@ -10012,8 +10012,7 @@ _additional_categories = {
     "is_asteroidal_triple_free" : "Graph properties",
     "chromatic_polynomial"      : "Coloring",
     "rank_decomposition"        : "Algorithmically hard stuff",
-    "nicetreewidth"                 : "Algorithmically hard stuff",
-
+    "nicetreewidth"             : "Algorithmically hard stuff",
     "treewidth"                 : "Algorithmically hard stuff",
     "pathwidth"                 : "Algorithmically hard stuff",
     "treelength"                : "Algorithmically hard stuff",

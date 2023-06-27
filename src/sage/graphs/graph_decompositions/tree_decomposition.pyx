@@ -258,7 +258,7 @@ def reduced_tree_decomposition(T):
 
     EXAMPLES::
 
-        sage: from sage.graphs.graph_decompositions.tree_decomposition import reduced_tree_decomposition
+    ons.tree_decomposition import reduced_tree_decomposition
         sage: from sage.graphs.graph_decompositions.tree_decomposition import is_valid_tree_decomposition
         sage: G = graphs.PathGraph(3)
         sage: T = Graph()
@@ -432,9 +432,83 @@ def _from_tree_decompositions_of_atoms_to_tree_decomposition(T_atoms, cliques):
     return T
 
 
-def nicetreewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
-    G = treewidth(g, k, kmin=, certificate, algorithm)
-    return G
+def nicetreewidth(g):
+    G = treewidth(g, certificate=True)
+    cdef list int_to_v = list(G)
+    cdef size_t n = g.order()
+
+    edges = G.to_dictionary()
+
+    #https://ask.sagemath.org/question/47443/plotting-a-labelledorderedtree-with-duplicate-labels/
+    class Wrap(object):
+        def __init__(self, obj):
+            self.obj = obj
+        def __repr__(self):
+            return repr(self.obj)
+    
+    root = int_to_v[0]
+    # Nice Decomposition
+    from sage.graphs.graph import Graph
+    ND = Graph()
+
+    def recurse(node,parent=None):
+        #ND.add_vertex(node)
+
+        # Get adjacent nodes in the standard decomposition
+        adjEdges = edges[node.obj]
+        if (parent != None):
+            
+            adjEdges.remove(parent)
+        if len(adjEdges) == 0:
+            newEdges = []
+            prevBag =node
+            while (len(prevBag.obj) > 1):
+                newSet = prevBag.obj.set() - {prevBag.obj._an_element_()}
+                currBag=Wrap(newSet)
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
+            return newEdges
+
+        if len(adjEdges) == 1:
+            #ADD TRansitions from parent to curr
+            newEdges = []
+
+            # add introduce nodes
+            notInParent = adjEdges[0]-node.obj
+            
+            prevBag = node
+            
+            notInChild = node.obj - adjEdges[0]
+            for i in notInChild:
+                currBag = Wrap(prevBag.obj.set()-{i})
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+                
+            for i in notInParent:
+                currBag = Wrap(prevBag.obj.union(Set({i})))
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+            
+            newEdges.extend(recurse(Wrap(adjEdges[0]), node.obj))
+            return newEdges
+        else:            
+            newEdges = []
+            left = Wrap(node)
+            right = Wrap(node)
+
+            leftChild = Wrap(adjEdges[0])
+            rightChild = Wrap(adjEdges[1])
+
+            newEdges.extend([{node,left},{node,right},{ left,leftChild},{right,rightChild}])
+            newEdges.extend(recurse(leftChild,node.obj))
+            newEdges.extend(recurse(rightChild,node.obj))
+            
+            return newEdges
+
+    r = recurse(node=Wrap(root))
+    ND.add_edges(r)
+    return ND
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
     r"""
