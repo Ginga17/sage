@@ -445,6 +445,8 @@ def nicetreewidth(g):
             self.obj = obj
         def __repr__(self):
             return repr(self.obj)
+        def __iter__(self):
+            return iter(self.obj)
     
     root = int_to_v[0]
     # Nice Decomposition
