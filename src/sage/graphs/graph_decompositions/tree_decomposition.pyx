@@ -452,12 +452,9 @@ def nicetreewidth(g):
     ND = Graph()
 
     def recurse(node,parent=None):
-        #ND.add_vertex(node)
-
         # Get adjacent nodes in the standard decomposition
         adjEdges = edges[node.obj]
         if (parent != None):
-            
             adjEdges.remove(parent)
         if len(adjEdges) == 0:
             newEdges = []
@@ -478,7 +475,6 @@ def nicetreewidth(g):
             notInParent = adjEdges[0]-node.obj
             
             prevBag = node
-            
             notInChild = node.obj - adjEdges[0]
             for i in notInChild:
                 currBag = Wrap(prevBag.obj.set()-{i})
@@ -489,21 +485,52 @@ def nicetreewidth(g):
                 currBag = Wrap(prevBag.obj.union(Set({i})))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
+            newEdges.extend(recurse(prevBag, node.obj))         #
             
-            newEdges.extend(recurse(Wrap(adjEdges[0]), node.obj))
+            ##newEdges.extend(recurse(currBag, node.obj))         #
             return newEdges
         else:            
+           # newEdges = []
+           # left = Wrap(node)
+           # right = Wrap(node)
+#
+           # leftChild = Wrap(adjEdges[0])
+           # rightChild = Wrap(adjEdges[1])
+#
+           # newEdges.extend([{node,left},{node,right},{ left,leftChild},{right,rightChild}])
+           # newEdges.extend(recurse(leftChild,node.obj))
+           # newEdges.extend(recurse(rightChild,node.obj))
+
             newEdges = []
-            left = Wrap(node)
-            right = Wrap(node)
 
-            leftChild = Wrap(adjEdges[0])
-            rightChild = Wrap(adjEdges[1])
+            leftIndex=0
+            currParent = node
 
-            newEdges.extend([{node,left},{node,right},{ left,leftChild},{right,rightChild}])
-            newEdges.extend(recurse(leftChild,node.obj))
-            newEdges.extend(recurse(rightChild,node.obj))
+            while(leftIndex < len(adjEdges)-1):
             
+                # Form duplicates for join node
+                left = Wrap(node.obj)
+                right = Wrap(node.obj)
+  
+                leftChild = Wrap(adjEdges[leftIndex])         
+                # rightChild = Wrap(adjEdges[1])
+
+                #Attach parent to duplicate nodes, and assign child to those nodes
+                newEdges.extend([{currParent,left},{currParent,right},{ left,leftChild}])  
+                #                      
+                newEdges.extend(recurse(leftChild,node.obj))
+                #newEdges.extend(recurse(rightChild,node.obj))
+                        
+                leftIndex+=1
+                currParent=right
+            
+            # 1 child left to assign
+            child = Wrap(node.obj)
+            newEdges.append({currParent,child})                        
+
+            newEdges.extend(recurse(child,node.obj))                        
+
+
             return newEdges
 
     r = recurse(node=Wrap(root))
