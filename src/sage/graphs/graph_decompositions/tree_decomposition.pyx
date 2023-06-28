@@ -453,6 +453,9 @@ def nicetreewidth(g):
 
     def recurse(node,parent=None):
         # Get adjacent nodes in the standard decomposition
+        print("HYA")
+        print(node.obj)
+        print(type(node.obj))
         adjEdges = edges[node.obj]
         if (parent != None):
             adjEdges.remove(parent)
@@ -477,7 +480,7 @@ def nicetreewidth(g):
             prevBag = node
             notInChild = node.obj - adjEdges[0]
             for i in notInChild:
-                currBag = Wrap(prevBag.obj.set()-{i})
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                 
@@ -485,9 +488,8 @@ def nicetreewidth(g):
                 currBag = Wrap(prevBag.obj.union(Set({i})))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
+                
             newEdges.extend(recurse(prevBag, node.obj))         #
-            
-            ##newEdges.extend(recurse(currBag, node.obj))         #
             return newEdges
         else:            
            # newEdges = []
@@ -525,9 +527,8 @@ def nicetreewidth(g):
                 currParent=right
             
             # 1 child left to assign
-            child = Wrap(node.obj)
+            child = Wrap(adjEdges[leftIndex])
             newEdges.append({currParent,child})                        
-
             newEdges.extend(recurse(child,node.obj))                        
 
 
