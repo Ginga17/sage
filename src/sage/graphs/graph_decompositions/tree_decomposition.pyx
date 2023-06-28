@@ -453,9 +453,6 @@ def nicetreewidth(g):
 
     def recurse(node,parent=None):
         # Get adjacent nodes in the standard decomposition
-        print("HYA")
-        print(node.obj)
-        print(type(node.obj))
         adjEdges = edges[node.obj]
         if (parent != None):
             adjEdges.remove(parent)
@@ -463,7 +460,8 @@ def nicetreewidth(g):
             newEdges = []
             prevBag =node
             while (len(prevBag.obj) > 1):
-                newSet = prevBag.obj.set() - {prevBag.obj._an_element_()}
+                
+                newSet = Set(prevBag.obj.set() - {prevBag.obj._an_element_()})
                 currBag=Wrap(newSet)
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
@@ -492,17 +490,6 @@ def nicetreewidth(g):
             newEdges.extend(recurse(prevBag, node.obj))         #
             return newEdges
         else:            
-           # newEdges = []
-           # left = Wrap(node)
-           # right = Wrap(node)
-#
-           # leftChild = Wrap(adjEdges[0])
-           # rightChild = Wrap(adjEdges[1])
-#
-           # newEdges.extend([{node,left},{node,right},{ left,leftChild},{right,rightChild}])
-           # newEdges.extend(recurse(leftChild,node.obj))
-           # newEdges.extend(recurse(rightChild,node.obj))
-
             newEdges = []
 
             leftIndex=0
@@ -515,13 +502,10 @@ def nicetreewidth(g):
                 right = Wrap(node.obj)
   
                 leftChild = Wrap(adjEdges[leftIndex])         
-                # rightChild = Wrap(adjEdges[1])
 
                 #Attach parent to duplicate nodes, and assign child to those nodes
                 newEdges.extend([{currParent,left},{currParent,right},{ left,leftChild}])  
-                #                      
                 newEdges.extend(recurse(leftChild,node.obj))
-                #newEdges.extend(recurse(rightChild,node.obj))
                         
                 leftIndex+=1
                 currParent=right
@@ -530,7 +514,6 @@ def nicetreewidth(g):
             child = Wrap(adjEdges[leftIndex])
             newEdges.append({currParent,child})                        
             newEdges.extend(recurse(child,node.obj))                        
-
 
             return newEdges
 
