@@ -432,10 +432,8 @@ def _from_tree_decompositions_of_atoms_to_tree_decomposition(T_atoms, cliques):
     return T
 
 
-def nicetreewidth(g):
-    G = treewidth(g, certificate=True)
-    cdef list int_to_v = list(G)
-    cdef size_t n = g.order()
+def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None):
+    G = treewidth(g, certificate=True,k=None, kmin=None, algorithm=None)
 
     edges = G.to_dictionary()
 
@@ -448,21 +446,23 @@ def nicetreewidth(g):
         def __iter__(self):
             return iter(self.obj)
     
-    root = int_to_v[0]
+    root =  list(G)[0]
     # Nice Decomposition
     from sage.graphs.graph import Graph
     ND = Graph()
 
+    # Recursive function, adds appropriate nodes below the current node to form a nice tree decomposition
     def recurse(node,parent=None):
         # Get adjacent nodes in the standard decomposition
         adjEdges = edges[node.obj]
         if (parent != None):
             adjEdges.remove(parent)
+        # Leaf Node
         if len(adjEdges) == 0:
             newEdges = []
             prevBag =node
+            # Add forget nodes until the last node has 1 element
             while (len(prevBag.obj) > 1):
-                
                 newSet = Set(prevBag.obj.set() - {prevBag.obj._an_element_()})
                 currBag=Wrap(newSet)
                 newEdges.append({prevBag,currBag})
@@ -470,27 +470,32 @@ def nicetreewidth(g):
 
             return newEdges
 
+        # Add introduce and forget nodes to transition between current node and child
         if len(adjEdges) == 1:
-            #ADD TRansitions from parent to curr
             newEdges = []
 
-            # add introduce nodes
-            notInParent = adjEdges[0]-node.obj
-            
-            prevBag = node
+            # Gets vertices in current bag that need to be removed 
             notInChild = node.obj - adjEdges[0]
+
+            #  Gets vertices in child vertex that need to be added  
+            notInParent = adjEdges[0]-node.obj
+
+            prevBag = node
+            # Forget Nodes
             for i in notInChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                 
+            # Introduce Nodes
             for i in notInParent:
                 currBag = Wrap(prevBag.obj.union(Set({i})))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
-                
+
             newEdges.extend(recurse(prevBag, node.obj))         #
             return newEdges
+        # When node has 2 or more children, join nodes are added
         else:            
             newEdges = []
 
@@ -499,10 +504,11 @@ def nicetreewidth(g):
 
             while(leftIndex < len(adjEdges)-1):
             
-                # Form duplicates for join node
+                # Form duplicates for join nodes
                 left = Wrap(node.obj)
                 right = Wrap(node.obj)
   
+                # Pass child to the new join node
                 leftChild = Wrap(adjEdges[leftIndex])         
 
                 #Attach parent to duplicate nodes, and assign child to those nodes
