@@ -6853,6 +6853,75 @@ class Graph(GenericGraph):
         import networkx
         return BipartiteGraph(networkx.make_clique_bipartite(self.networkx_graph(), **kwds))
 
+    # T is a tree decomposition of g(self)
+    def vertex_cover_from_ntd(self,T, root):
+        g=self
+        TDedges = g.to_dictionary()
+        Gedges = g.to_dictionary()
+        # Recursive function, adds appropriate nodes below the current node to form a nice tree decomposition
+        
+
+        def recurse(node,parent=None):
+            # Get adjacent nodes in the standard decomposition
+            adjEdges = TDedges[node.obj]
+            if (parent is not None):
+                adjEdges.remove(parent)
+            # Leaf Node
+            if len(adjEdges) == 0:
+                return []
+            # Introduce node
+            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0]):
+                newNode = node.obj - adjEdges[0]
+                # Valid vertex covers when the new node is included
+                newVCs = []
+                CVC = recurse(adjEdges[0],node)
+
+                for VC in CVC:
+                    newEdges = Gedges[newNode]
+                    # Handle not adding new vertex
+                    for newEdge in newEdges:
+                        if (newEdge not in VC):
+                            
+                            break
+                    else:
+                        #VC is already a valid VC
+                        newVCs.append(VC)
+                    adj = CVC + newNode
+                    # get all permutations of the set of adj to newNode
+                    # See how many we can remove
+
+
+                prevBag = node
+                # Forget Nodes
+                for i in notInChild:
+                    currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+                    
+                # Introduce Nodes
+                for i in notInParent:
+                    currBag = Wrap(prevBag.obj.union(Set({i})))
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+
+                newEdges.extend(recurse(prevBag, node.obj))         #
+                return newEdges
+            if len(adjEdges) == 1 and len(node.obj) > len(adjEdges[0]):
+                # 
+                print("TODO")
+            if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0]):
+                return recurse(adjEdges[0])
+            if len(adjEdges) == 2:
+                #HANDLE
+                print("JOIN NODE")
+            else:            
+                #ERROR, node doesnt meet NTD node criteria
+                print("HANDLE ERROR")
+
+            r = recurse(node=rootNode)
+            ND.add_edges(r)
+
+
     @doc_index("Algorithmically hard stuff")
     @rename_keyword(deprecation=32238, verbosity='verbose')
     def independent_set(self, algorithm="Cliquer", value_only=False, reduction_rules=True,
@@ -7191,6 +7260,9 @@ class Graph(GenericGraph):
             # Reduction rules were sufficients to get the solution
             size_cover_g = 0
             cover_g = set()
+        elif algorithm == "NTD":
+            
+            print("TD LINK TO NTD => VERTEX COVER FUNCTION")
 
         elif algorithm == "Cliquer" or algorithm == "mcqd":
             if g.has_multiple_edges() and not reduction_rules:

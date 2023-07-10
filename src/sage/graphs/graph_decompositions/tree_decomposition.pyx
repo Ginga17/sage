@@ -432,7 +432,50 @@ def _from_tree_decompositions_of_atoms_to_tree_decomposition(T_atoms, cliques):
     return T
 
 
-def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None):
+def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
+    r"""
+    Compute a nice tree decomposition of `g`.
+    A nice tree decomposition is a tree decomposition of a graph g, where every
+    node in the decomposition can be categorised as one of the following:
+        • Leaf node: has no children and a bag size of 1.
+        • Introduce node: has one child. The child has the same vertices as the
+          parent with one deleted.
+        • Forget node: has one child. The child has the same vertices as the 
+          parent with one added.
+        • Join node: has two children, both having identical bags to the parent
+
+    INPUT:
+
+    - ``g`` -- a sage Graph
+
+    - ``k`` -- integer (default: ``None``); indicates the width to be
+      considered. When ``k`` is an integer, the method checks that the graph has
+      treewidth `\leq k`. If ``k`` is ``None`` (default), the method computes
+      the optimal tree-width.
+
+    - ``kmin`` -- integer (default: ``None``); when specified, search for a
+      tree-decomposition of width at least ``kmin``. This parameter is useful
+      when the graph can be decomposed into atoms.  This parameter is ignored
+      when ``k`` is not ``None`` or when ``algorithm == 'tdlib'``.
+
+    - ``algorithm`` -- whether to use ``"sage"`` or ``"tdlib"`` (requires the
+      installation of the 'tdlib' package). The default behaviour is to use
+      'tdlib' if it is available, and Sage's own algorithm when it is not.
+
+    - ``root`` -- boolean (default: ``True``); whether to return the root of the 
+      nice tree decomposition
+
+    OUTPUT:
+
+    ``g.nice_tree_decomposition()`` returns a nice tree decomposition of ``g``.
+
+    ALGORITHM:
+
+    This function utilises the treewidth(certificate=True) function to generate 
+    a tree decomposition. Once this has been complete, a recursive function is
+    utilised to add any necessary nodes and edges to produce a 'nice' tree 
+    decomposition.
+    """
     G = treewidth(g, certificate=True,k=None, kmin=None, algorithm=None)
 
     edges = G.to_dictionary()
@@ -446,7 +489,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None):
         def __iter__(self):
             return iter(self.obj)
     
-    root =  list(G)[0]
+    rootNode =  Wrap(list(G)[0])
     # Nice Decomposition
     from sage.graphs.graph import Graph
     ND = Graph()
@@ -525,8 +568,10 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None):
 
             return newEdges
 
-    r = recurse(node=Wrap(root))
+    r = recurse(node=rootNode)
     ND.add_edges(r)
+    if (root):
+        return ND, rootNode
     return ND
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
