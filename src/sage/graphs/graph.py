@@ -6854,13 +6854,11 @@ class Graph(GenericGraph):
         return BipartiteGraph(networkx.make_clique_bipartite(self.networkx_graph(), **kwds))
 
     # T is a tree decomposition of g(self)
-    def vertex_cover_from_ntd(self,T, root):
+    def vertex_cover_from_ntd(self,T, root,rootNode):
         g=self
-        TDedges = g.to_dictionary()
+        TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
-        # Recursive function, adds appropriate nodes below the current node to form a nice tree decomposition
         
-
         def recurse(node,parent=None):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node.obj]
@@ -6878,48 +6876,48 @@ class Graph(GenericGraph):
 
                 for VC in CVC:
                     newEdges = Gedges[newNode]
-                    # Handle not adding new vertex
+                    # Handle the case of not adding new vertex => check if VC already a VC for parent
                     for newEdge in newEdges:
-                        if (newEdge not in VC):
-                            
+                        # If the edge isnt in the prev min vertex cover 
+                        # and the edge is included in the current bag
+                        if (newEdge not in VC and newEdge in node.obj):
                             break
                     else:
                         #VC is already a valid VC
                         newVCs.append(VC)
-                    adj = CVC + newNode
-                    # get all permutations of the set of adj to newNode
-                    # See how many we can remove
-
-
-                prevBag = node
-                # Forget Nodes
-                for i in notInChild:
-                    currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
-                    
-                # Introduce Nodes
-                for i in notInParent:
-                    currBag = Wrap(prevBag.obj.union(Set({i})))
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
-
-                newEdges.extend(recurse(prevBag, node.obj))         #
-                return newEdges
-            if len(adjEdges) == 1 and len(node.obj) > len(adjEdges[0]):
-                # 
-                print("TODO")
-            if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0]):
-                return recurse(adjEdges[0])
+                    # Include the new vertex
+                    N = CVC + newNode
+                    for C in VC:
+                        # get all adjacent edges tp 
+                        allEdges = Gedges[C]
+                        for P in allEdges:
+                            if (P not in N):
+                                break
+                        else:
+                            newVCs.append(N-C)
+                return newVCs
+            if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0]):
+                return recurse(adjEdges[0],node)
             if len(adjEdges) == 2:
-                #HANDLE
-                print("JOIN NODE")
-            else:            
-                #ERROR, node doesnt meet NTD node criteria
-                print("HANDLE ERROR")
+                LeftMVC = recurse(adjEdges[0])
+                RightMVC = recurse(adjEdges[1])
 
-            r = recurse(node=rootNode)
-            ND.add_edges(r)
+                min_combinations = []
+                min_length = float('inf')
+
+                for a in LeftMVC:
+                    for b in RightMVC:
+                        combination = a.union(b)
+                        combination_length = len(combination)
+                        if combination_length < min_length:
+                            min_combinations = [combination]
+                            min_length = combination_length
+                        elif combination_length == min_length:
+                            min_combinations.append(combination)
+                return min_combinations
+            else:            
+                raise ValueError("T is not a valid nice tree decomposition")
+        return recurse(node=rootNode)
 
 
     @doc_index("Algorithmically hard stuff")
