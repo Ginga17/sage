@@ -555,15 +555,57 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
                 leftChild = Wrap(adjEdges[leftIndex])         
 
                 #Attach parent to duplicate nodes, and assign child to those nodes
-                newEdges.extend([{currParent,left},{currParent,right},{ left,leftChild}])  
+                newEdges.extend([{currParent,left},{currParent,right}])  
+                
+                # Need to link left to leftChild befor continuing recursion on left child.
+                # left has exactly one child. Recursion cannot immediately be called on left since left is not part of g.
+
+                missingFromChild = left.obj - leftChild.obj;
+                missingFromParent = leftChild.obj - left.obj;
+                
+                prevBag = left;
+                
+                # Adding forget nodes
+                for i in missingFromChild:
+                    currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+                
+                # Introduce Nodes
+                for i in missingFromParent:
+                    currBag = Wrap(prevBag.obj.union(Set({i})))
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+
+
+                # Finally connect the last node to left child, and recurse to the child.
+                newEdges.append({prevBag,leftChild})
                 newEdges.extend(recurse(leftChild,node.obj))
-                        
+
                 leftIndex+=1
                 currParent=right
             
             # 1 child left to assign
             child = Wrap(adjEdges[leftIndex])
-            newEdges.append({currParent,child})                        
+
+            missingFromChild = currParent.obj - child.obj;
+            missingFromParent = child.obj - currParent.obj;
+            
+            prevBag = currParent;
+            
+            # Adding forget nodes
+            for i in missingFromChild:
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+            
+            # Introduce Nodes
+            for i in missingFromParent:
+                currBag = Wrap(prevBag.obj.union(Set({i})))
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
+            newEdges.append({prevBag,child})     
             newEdges.extend(recurse(child,node.obj))                        
 
             return newEdges
