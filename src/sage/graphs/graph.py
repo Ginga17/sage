@@ -6854,25 +6854,32 @@ class Graph(GenericGraph):
         return BipartiteGraph(networkx.make_clique_bipartite(self.networkx_graph(), **kwds))
 
     # T is a tree decomposition of g(self)
-    def vertex_cover_from_ntd(self,T, root,rootNode):
+    def vertex_cover_from_ntd(self):
+    # def vertex_cover_from_ntd(self,T, rootNode):
+        T,rootNode = self.nice_tree_decomposition()
+
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
-        
+    
         def recurse(node,parent=None):
             # Get adjacent nodes in the standard decomposition
-            adjEdges = TDedges[node.obj]
+            adjEdges = TDedges[node]
+            print("mark")
+            print(adjEdges)
+            # return;
             if (parent is not None):
                 adjEdges.remove(parent)
+            print(adjEdges)
             # Leaf Node
             if len(adjEdges) == 0:
                 return []
             # Introduce node
-            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0]):
+            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0].obj):
                 newNode = node.obj - adjEdges[0]
                 # Valid vertex covers when the new node is included
                 newVCs = []
-                CVC = recurse(adjEdges[0],node)
+                CVC = recurse(adjEdges[0], node)
 
                 for VC in CVC:
                     newEdges = Gedges[newNode]
@@ -6895,12 +6902,18 @@ class Graph(GenericGraph):
                                 break
                         else:
                             newVCs.append(N-C)
+                print("mark2")
+                print(CVC)
+                print(newVCs)
                 return newVCs
-            if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0]):
+            if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0].obj):
                 return recurse(adjEdges[0],node)
+            if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
+                return recurse(adjEdges[0],node)
+            
             if len(adjEdges) == 2:
-                LeftMVC = recurse(adjEdges[0])
-                RightMVC = recurse(adjEdges[1])
+                LeftMVC = recurse(adjEdges[0], node)
+                RightMVC = recurse(adjEdges[1], node)
 
                 min_combinations = []
                 min_length = float('inf')
@@ -6916,6 +6929,9 @@ class Graph(GenericGraph):
                             min_combinations.append(combination)
                 return min_combinations
             else:            
+                print("invalid")
+                print(node)
+                print(adjEdges)
                 raise ValueError("T is not a valid nice tree decomposition")
         return recurse(node=rootNode)
 
