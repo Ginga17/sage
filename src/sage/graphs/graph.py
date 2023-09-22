@@ -6861,80 +6861,136 @@ class Graph(GenericGraph):
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
-    
+        V = set(g.vertices())
+        print(V)
+        from itertools import combinations
+
         def recurse(node,parent=None):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
-            print("mark")
-            print(adjEdges)
-            # return;
+            bag=node.obj
+            print(bag)
             if (parent is not None):
                 adjEdges.remove(parent)
             print(adjEdges)
             # Leaf Node
             if len(adjEdges) == 0:
-                return []
+                print("LEAF NODE")
+                return {frozenset():{},frozenset(bag):bag}
             # Introduce node
             if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0].obj):
-                newNode = node.obj - adjEdges[0]
-                # Valid vertex covers when the new node is included
-                newVCs = []
-                CVC = recurse(adjEdges[0], node)
+                print("INTRODUCE NODE")
+                
+                newNode = (bag - adjEdges[0].obj)[0]
 
-                for VC in CVC:
-                    newEdges = Gedges[newNode]
-                    # Handle the case of not adding new vertex => check if VC already a VC for parent
-                    for newEdge in newEdges:
-                        # If the edge isnt in the prev min vertex cover 
-                        # and the edge is included in the current bag
-                        if (newEdge not in VC and newEdge in node.obj):
-                            break
-                    else:
-                        #VC is already a valid VC
-                        newVCs.append(VC)
-                    # Include the new vertex
-                    N = CVC + newNode
-                    for C in VC:
-                        # get all adjacent edges tp 
-                        allEdges = Gedges[C]
-                        for P in allEdges:
-                            if (P not in N):
+                # Valid vertex covers when the new node is included
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                print("INTRODUCE NODE")
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+  
+
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S in all_subsets:
+                    excludedNodes = bag - S
+                    edgeNotCovered = False
+                    # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                    for i in excludedNodes:
+                        excludedEdges = Gedges[i]
+                        for e in excludedEdges:
+                            # Checks if this subset S contains any edges within the bag that are not covered by S
+                            if (e in excludedNodes):
+                                newVCs[frozenset(S)] = V
+                                edgeNotCovered = True
                                 break
+                        if (edgeNotCovered):
+                            break
+                    if (edgeNotCovered is False):
+                        if(newNode in S):
+                            newVCs[frozenset(S)] = set(CVC[frozenset(S-{newNode})]).union({newNode})
                         else:
-                            newVCs.append(N-C)
-                print("mark2")
-                print(CVC)
+                            newVCs[frozenset(S)] = CVC[frozenset(S)]
+
                 print(newVCs)
                 return newVCs
+            # Forget
             if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0].obj):
-                return recurse(adjEdges[0],node)
+                
+                print("FORGET NODE")
+                forgottenNode = (adjEdges[0].obj - bag)[0]
+
+                # Valid vertex covers when the new node is included
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                print("FORGET NODE")
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                # Check CVC for all values of S
+                for S in all_subsets:
+                    excludedNodes = bag - S
+                    bestVC = V
+                    for S1, VC in CVC.items():
+                        if (S <= S1 and set(excludedNodes).isdisjoint(S1)):
+                            if len(VC) < len(bestVC):
+                                bestVC = VC
+                    newVCs[frozenset(S)] = bestVC
+
+                print(newVCs)
+                return newVCs
+                
+            # Child Node is identical. This should nnot exist in a nice tree decomp and is here for debugging
             if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
-                return recurse(adjEdges[0],node)
-            
+                print("SAME NODE")
+                r= recurse(adjEdges[0],node)
+                print("SAME NODE")
+                return r
             if len(adjEdges) == 2:
+                newVCs = {}
+
+                print("JOIN NODE")
+
                 LeftMVC = recurse(adjEdges[0], node)
+                print("JOIN NODE1")
+                print(LeftMVC)
+                
                 RightMVC = recurse(adjEdges[1], node)
+                print("JOIN NODE2")
+                # print("child dictionaries")
+                print(RightMVC)
 
-                min_combinations = []
-                min_length = float('inf')
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S1 in all_subsets:
+                    S= frozenset(S1)
+                    newVCs[S] = set(LeftMVC[S]).union(set(RightMVC[S]))
 
-                for a in LeftMVC:
-                    for b in RightMVC:
-                        combination = a.union(b)
-                        combination_length = len(combination)
-                        if combination_length < min_length:
-                            min_combinations = [combination]
-                            min_length = combination_length
-                        elif combination_length == min_length:
-                            min_combinations.append(combination)
-                return min_combinations
+                return newVCs
             else:            
                 print("invalid")
                 print(node)
                 print(adjEdges)
                 raise ValueError("T is not a valid nice tree decomposition")
-        return recurse(node=rootNode)
+        MVCDict = recurse(node=rootNode)
 
+        bestVC = V
+        for S, VC in MVCDict.items():
+            if len(VC) < len(bestVC):
+                bestVC = VC
+        return list(bestVC)
 
     @doc_index("Algorithmically hard stuff")
     @rename_keyword(deprecation=32238, verbosity='verbose')
