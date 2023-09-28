@@ -568,22 +568,23 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
                 # Adding forget nodes
                 for i in missingFromChild:
                     currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                    if (currBag == leftChild):
-                        newEdges.append({prevBag,leftChild})
-                    else:
-                        newEdges.append({prevBag,currBag})
-                        prevBag=currBag
-                
+                    #if (currBag == leftChild):
+                    #    newEdges.append({prevBag,leftChild})
+                    #else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+            
                 # Introduce Nodes
                 for i in missingFromParent:
                     currBag = Wrap(prevBag.obj.union(Set({i})))
-                    if (currBag == leftChild):
-                        newEdges.append({prevBag,leftChild})
-                    else:
-                        newEdges.append({prevBag,currBag})
-                        prevBag=currBag
+                    #if (currBag == leftChild):
+                    #    newEdges.append({prevBag,leftChild})
+                    #else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
 
                 # Finally  recurse to the child.
+                newEdges.append({prevBag,leftChild})
                 newEdges.extend(recurse(leftChild,node.obj))
 
                 leftIndex+=1
@@ -600,20 +601,21 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # Adding forget nodes
             for i in missingFromChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                if (currBag == leftChild):
-                    newEdges.append({prevBag,leftChild})
-                else:
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
+                #if (currBag == leftChild):
+                #    newEdges.append({prevBag,leftChild})
+                #else:
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
                     
             # Introduce Nodes
             for i in missingFromParent:
                 currBag = Wrap(prevBag.obj.union(Set({i})))
-                if (currBag == leftChild):
-                    newEdges.append({prevBag,leftChild})
-                else:
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
+                #if (currBag == leftChild):
+                #    newEdges.append({prevBag,leftChild})
+                #else:
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
 
             newEdges.append({prevBag,child})     
             newEdges.extend(recurse(child,node.obj))                        
@@ -624,7 +626,6 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
     if (root):
         return ND, rootNode
     return ND
-
 
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
