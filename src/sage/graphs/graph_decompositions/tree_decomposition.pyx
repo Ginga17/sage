@@ -515,13 +515,14 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
 
         # Add introduce and forget nodes to transition between current node and child
         if len(adjEdges) == 1:
+            child = adjEdges[0]
             newEdges = []
 
             # Gets vertices in current bag that need to be removed 
-            notInChild = node.obj - adjEdges[0]
+            notInChild = node.obj - child
 
             #  Gets vertices in child vertex that need to be added  
-            notInParent = adjEdges[0]-node.obj
+            notInParent = child -node.obj
 
             prevBag = node
             # Forget Nodes
@@ -554,7 +555,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
                 # Pass child to the new join node
                 leftChild = Wrap(adjEdges[leftIndex])         
 
-                #Attach parent to duplicate nodes, and assign child to those nodes
+                #Attach parent to its duplicate nodes
                 newEdges.extend([{currParent,left},{currParent,right}])  
                 
                 # Need to link left to leftChild befor continuing recursion on left child.
@@ -562,24 +563,27 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
 
                 missingFromChild = left.obj - leftChild.obj;
                 missingFromParent = leftChild.obj - left.obj;
-                
                 prevBag = left;
                 
                 # Adding forget nodes
                 for i in missingFromChild:
                     currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
+                    if (currBag == leftChild):
+                        newEdges.append({prevBag,leftChild})
+                    else:
+                        newEdges.append({prevBag,currBag})
+                        prevBag=currBag
                 
                 # Introduce Nodes
                 for i in missingFromParent:
                     currBag = Wrap(prevBag.obj.union(Set({i})))
-                    newEdges.append({prevBag,currBag})
-                    prevBag=currBag
+                    if (currBag == leftChild):
+                        newEdges.append({prevBag,leftChild})
+                    else:
+                        newEdges.append({prevBag,currBag})
+                        prevBag=currBag
 
-
-                # Finally connect the last node to left child, and recurse to the child.
-                newEdges.append({prevBag,leftChild})
+                # Finally  recurse to the child.
                 newEdges.extend(recurse(leftChild,node.obj))
 
                 leftIndex+=1
@@ -596,18 +600,23 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # Adding forget nodes
             for i in missingFromChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                newEdges.append({prevBag,currBag})
-                prevBag=currBag
-            
+                if (currBag == leftChild):
+                    newEdges.append({prevBag,leftChild})
+                else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+                    
             # Introduce Nodes
             for i in missingFromParent:
                 currBag = Wrap(prevBag.obj.union(Set({i})))
-                newEdges.append({prevBag,currBag})
-                prevBag=currBag
+                if (currBag == leftChild):
+                    newEdges.append({prevBag,leftChild})
+                else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
 
             newEdges.append({prevBag,child})     
             newEdges.extend(recurse(child,node.obj))                        
-
             return newEdges
 
     r = recurse(node=rootNode)
@@ -615,6 +624,8 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
     if (root):
         return ND, rootNode
     return ND
+
+
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
     r"""
