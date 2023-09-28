@@ -698,42 +698,36 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             adjEdges.remove(parent)
         # Leaf Node
         if len(adjEdges) == 0:
-            newEdges = []
-            prevBag =node
-            # Add forget nodes until the last node has 1 element
-            while (len(prevBag.obj) > 1):
-                newSet = Set(prevBag.obj.set() - {prevBag.obj._an_element_()})
-                currBag=Wrap(newSet)
-                newEdges.append({prevBag,currBag})
-                prevBag=currBag
-
-            return newEdges
+            if len(node.obj) == 1:
+                return [];
+            # Add forget node to transition to a leaf node with 1 element
+            else:
+                return [{node,Wrap({node.obj._an_element_()})}]
 
         # Add introduce and forget nodes to transition between current node and child
         if len(adjEdges) == 1:
             child = adjEdges[0]
+            childNode = Wrap(child)
             newEdges = []
 
             # Gets vertices in current bag that need to be removed 
             notInChild = node.obj - child
-
             #  Gets vertices in child vertex that need to be added  
             notInParent = child - node.obj
 
-            prevBag = node
-            
-            # Check if forget node is necessary
-            if (len(notInChild) > 0):
-                forgetNode = node-notInChild
-                newEdges.append({prevBag,forgetNode})
-                prevBag = forgetNode
+            # If nodes are both added and forgotten between this node and the child,
+            # a linking forget node is needed to split the 2 steps
+            if (len(notInChild) > 0 and len(notInParent) > 0):
+                forgetNode = node.obj - notInChild
+                newEdges.append({node,forgetNode})
+                newEdges.append({forgetNode, childNode})
 
-            if (len(notInParent) > 0):
-                introduceNode = node-notInParent
-                newEdges.append({prevBag,introduceNode})
-                prevBag = introduceNode
+            else:
+                newEdges.append({node, childNode})
 
-            newEdges.extend(recurse(prevBag, node.obj))         #
+            # Finally  recurse to the child.
+            newEdges.extend(recurse(childNode,node.obj))
+
             return newEdges
         # When node has 2 or more children, join nodes are added
         else:            
@@ -757,7 +751,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
                 # If nodes are both added and forgotten between this node and the child,
                 # a linking forget node is needed to split the 2 steps
                 if (len(notInChild) > 0 and len(notInParent) > 0):
-                    forgetNode = node - notInChild
+                    forgetNode = node.obj - notInChild
                     newEdges.append({duplicate,forgetNode})
                     newEdges.append({forgetNode, childNode})
 

@@ -10100,8 +10100,7 @@ class Graph(GenericGraph):
     from sage.graphs.asteroidal_triples import is_asteroidal_triple_free
     from sage.graphs.chrompoly import chromatic_polynomial
     from sage.graphs.graph_decompositions.rankwidth import rank_decomposition
-    from sage.graphs.graph_decompositions.tree_decomposition import nice_tree_decomposition
-    from sage.graphs.graph_decompositions.tree_decomposition import treewidth
+    from sage.graphs.graph_decompositions.tree_decomposition import treewidth, nice_tree_decomposition, semi_nice_tree_decomposition
     from sage.graphs.graph_decompositions.vertex_separation import pathwidth
     from sage.graphs.graph_decompositions.tree_decomposition import treelength
     from sage.graphs.graph_decompositions.clique_separators import atoms_and_clique_separators
