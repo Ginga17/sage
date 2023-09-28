@@ -6853,6 +6853,14 @@ class Graph(GenericGraph):
         import networkx
         return BipartiteGraph(networkx.make_clique_bipartite(self.networkx_graph(), **kwds))
 
+    def is_vertex_cover(self, vertex_cover):
+        g=self
+        for edge in g.edges(labels=False):
+            u, v = edge
+            if u not in vertex_cover and v not in vertex_cover:
+                return False
+        return True
+
     # T is a tree decomposition of g(self)
     def vertex_cover_from_ntd(self):
     # def vertex_cover_from_ntd(self,T, rootNode):
@@ -6869,27 +6877,19 @@ class Graph(GenericGraph):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
             bag=node.obj
-            print(bag)
             if (parent is not None):
                 adjEdges.remove(parent)
-            print(adjEdges)
             # Leaf Node
             if len(adjEdges) == 0:
-                print("LEAF NODE")
                 return {frozenset():{},frozenset(bag):bag}
             # Introduce node
-            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0].obj):
-                print("INTRODUCE NODE")
-                
+            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0].obj):                
                 newNode = (bag - adjEdges[0].obj)[0]
 
-                # Valid vertex covers when the new node is included
                 newVCs = {}
                 CVC = recurse(adjEdges[0], node)
-                print("INTRODUCE NODE")
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
-  
 
                 for subset_size in range(len(input_list) + 1):
                     for subset in combinations(input_list, subset_size):
@@ -6915,18 +6915,13 @@ class Graph(GenericGraph):
                         else:
                             newVCs[frozenset(S)] = CVC[frozenset(S)]
 
-                print(newVCs)
                 return newVCs
             # Forget
             if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0].obj):
                 
-                print("FORGET NODE")
-                forgottenNode = (adjEdges[0].obj - bag)[0]
-
                 # Valid vertex covers when the new node is included
                 newVCs = {}
                 CVC = recurse(adjEdges[0], node)
-                print("FORGET NODE")
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
                 
@@ -6944,28 +6939,18 @@ class Graph(GenericGraph):
                                 bestVC = VC
                     newVCs[frozenset(S)] = bestVC
 
-                print(newVCs)
                 return newVCs
                 
             # Child Node is identical. This should nnot exist in a nice tree decomp and is here for debugging
             if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
-                print("SAME NODE")
                 r= recurse(adjEdges[0],node)
-                print("SAME NODE")
                 return r
             if len(adjEdges) == 2:
                 newVCs = {}
 
-                print("JOIN NODE")
-
                 LeftMVC = recurse(adjEdges[0], node)
-                print("JOIN NODE1")
-                print(LeftMVC)
                 
                 RightMVC = recurse(adjEdges[1], node)
-                print("JOIN NODE2")
-                # print("child dictionaries")
-                print(RightMVC)
 
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
@@ -6984,9 +6969,12 @@ class Graph(GenericGraph):
                 print(node)
                 print(adjEdges)
                 raise ValueError("T is not a valid nice tree decomposition")
+
+        # Solves the problem for the root bag
         MVCDict = recurse(node=rootNode)
 
         bestVC = V
+        # Finds the smallest vertex cover formed from sets using the root bag
         for S, VC in MVCDict.items():
             if len(VC) < len(bestVC):
                 bestVC = VC
