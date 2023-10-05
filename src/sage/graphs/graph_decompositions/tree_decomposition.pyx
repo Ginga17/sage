@@ -527,8 +527,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             prevBag = node
             # Forget Nodes
             for i in notInChild:
-                currBag = Wrap(prevBag.obj-Set({i}))
-                (Set(prevBag.obj.set()-{i}))
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                 
@@ -597,8 +596,8 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # 1 child left to assign
             child = Wrap(adjEdges[leftIndex])
             print(child)
-            missingFromChild = currParent.obj - child.obj;
-            missingFromParent = child.obj - currParent.obj;
+            missingFromChild = node.obj - child.obj;
+            missingFromParent = child.obj - node.obj;
             
             prevBag = currParent;
             
@@ -722,7 +721,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             # If nodes are both added and forgotten between this node and the child,
             # a linking forget node is needed to split the 2 steps
             if (len(notInChild) > 0 and len(notInParent) > 0):
-                forgetNode = node.obj - notInChild
+                forgetNode =Wrap( node.obj - notInChild)
                 newEdges.append({node,forgetNode})
                 newEdges.append({forgetNode, childNode})
 
@@ -741,7 +740,6 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             for child in adjEdges:            
                 # Form duplicate for join nodes
                 duplicate = Wrap(node.obj)
-  
                 childNode = Wrap(child)         
 
                 # Attach parent to its duplicate nodes
@@ -755,7 +753,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
                 # If nodes are both added and forgotten between this node and the child,
                 # a linking forget node is needed to split the 2 steps
                 if (len(notInChild) > 0 and len(notInParent) > 0):
-                    forgetNode = node.obj - notInChild
+                    forgetNode = Wrap(node.obj - notInChild)
                     newEdges.append({duplicate,forgetNode})
                     newEdges.append({forgetNode, childNode})
 
