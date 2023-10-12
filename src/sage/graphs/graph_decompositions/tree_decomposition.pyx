@@ -503,7 +503,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
         # Leaf Node
         if len(adjEdges) == 0:
             newEdges = []
-            prevBag = node
+            prevBag =node
             # Add forget nodes until the last node has 1 element
             while (len(prevBag.obj) > 1):
                 newSet = Set(prevBag.obj.set() - {prevBag.obj._an_element_()})
@@ -528,6 +528,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # Forget Nodes
             for i in notInChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                 
@@ -541,14 +542,14 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             return newEdges
         # When node has 2 or more children, join nodes are added
         else:            
+            print("JOIN")
+            print(node.obj)
+            print(adjEdges)
             newEdges = []
 
             leftIndex=0
             currParent = node
 
-            print("JOIN")
-            print(adjEdges)
-            print("YYYYYYY")
             while(leftIndex < len(adjEdges)-1):
             
                 # Form duplicates for join nodes
@@ -557,7 +558,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
   
                 # Pass child to the new join node
                 leftChild = Wrap(adjEdges[leftIndex])         
-                print(leftChild)
+
                 #Attach parent to its duplicate nodes
                 newEdges.extend([{currParent,left},{currParent,right}])  
                 
