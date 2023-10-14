@@ -6995,13 +6995,50 @@ class Graph(GenericGraph):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
             bag=node.obj
+
+            print("AHHH")
+            print(bag)
+            print(adjEdges)
             if (parent is not None):
+                print("REM PARENT NODE")
+                print(parent)
+                print(adjEdges)
+                print(node)
+                print(type(node))
+                print(type(adjEdges[0]))
                 adjEdges.remove(parent)
             # Leaf Node
             if len(adjEdges) == 0:
-                return {frozenset():{},frozenset(bag):bag}
+                newVCs = {}
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S in all_subsets:
+                    excludedNodes = bag - S
+                    edgeNotCovered = False
+                    # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                    for i in excludedNodes:
+                        excludedEdges = Gedges[i]
+                        for e in excludedEdges:
+                            # Checks if this subset S contains any edges within the bag that are not covered by S
+                            if (e in excludedNodes):
+                                edgeNotCovered = True
+                                break
+                        if (edgeNotCovered):
+                            break
+                    if (edgeNotCovered):
+                        newVCs[frozenset(S)] = V
+                    else:
+                        newVCs[frozenset(S)] = frozenset(S)
+
+                return newVCs
             # Introduce node
             if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0].obj):
+                print("LOL")
                 # Check validity of introduce node i.e adjEdges[0].obj - node.obj == {}
                 newNodes = (bag - adjEdges[0].obj)
 
@@ -7030,7 +7067,8 @@ class Graph(GenericGraph):
                     if (edgeNotCovered):
                         newVCs[frozenset(S)] = V
                     else:
-                        if(newNode in S):
+                        # Check if there are any new nodes in the set which don't exist in the below bag
+                        if(newNodes - S):
                             newVCs[frozenset(S)] = set(CVC[frozenset(S-newNodes)]).union(newNodes)
                         else:
                             newVCs[frozenset(S)] = CVC[frozenset(S)]
@@ -7067,10 +7105,6 @@ class Graph(GenericGraph):
             if len(adjEdges) >= 2:
                 newVCs = {}
                 childMVCs = []
-
-                for child in adjEdges:
-                    print(child)
-
 
                 for child in adjEdges:
                     print(child)

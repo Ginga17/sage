@@ -528,7 +528,6 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # Forget Nodes
             for i in notInChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                currBag = Wrap(Set(prevBag.obj.set()-{i}))
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                 
@@ -596,9 +595,9 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             
             # 1 child left to assign
             child = Wrap(adjEdges[leftIndex])
-            print(child)
-            missingFromChild = node.obj - child.obj;
-            missingFromParent = child.obj - node.obj;
+
+            missingFromChild = currParent.obj - child.obj;
+            missingFromParent = child.obj - currParent.obj;
             
             prevBag = currParent;
             
@@ -702,11 +701,12 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             adjEdges.remove(parent)
         # Leaf Node
         if len(adjEdges) == 0:
-            if len(node.obj) == 1:
-                return [];
+            #if len(node.obj) == 1:
+            #    return [];
             # Add forget node to transition to a leaf node with 1 element
-            else:
-                return [{node,Wrap({node.obj._an_element_()})}]
+            ##else:
+            #    return [{node,Wrap({node.obj._an_element_()})}]
+            return []
 
         # Add introduce and forget nodes to transition between current node and child
         if len(adjEdges) == 1:
@@ -722,7 +722,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             # If nodes are both added and forgotten between this node and the child,
             # a linking forget node is needed to split the 2 steps
             if (len(notInChild) > 0 and len(notInParent) > 0):
-                forgetNode =Wrap( node.obj - notInChild)
+                forgetNode = Wrap(node.obj - notInChild)
                 newEdges.append({node,forgetNode})
                 newEdges.append({forgetNode, childNode})
 
@@ -741,6 +741,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             for child in adjEdges:            
                 # Form duplicate for join nodes
                 duplicate = Wrap(node.obj)
+  
                 childNode = Wrap(child)         
 
                 # Attach parent to its duplicate nodes
@@ -762,7 +763,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
                     newEdges.append({duplicate, childNode})
 
                 # Finally  recurse to the child.
-                newEdges.extend(recurse(childNode,duplicate.obj))
+                newEdges.extend(recurse(childNode,node.obj))
                                  
             return newEdges
 
