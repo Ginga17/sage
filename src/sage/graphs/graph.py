@@ -6988,22 +6988,16 @@ class Graph(GenericGraph):
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
         V = set(g.vertices())
-        print(V)
         from itertools import combinations
 
         def recurse(node,parent=None):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
             bag=node.obj
-            print("AYO")
-            print(bag)
-            print(adjEdges)
             if (parent is not None):
                 adjEdges.remove(parent)
             # Leaf Node
             if len(adjEdges) == 0:
-                print(bag)
-                print("LEAF")
                 newVCs = {}
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
@@ -7029,12 +7023,9 @@ class Graph(GenericGraph):
                         newVCs[frozenset(S)] = V
                     else:
                         newVCs[frozenset(S)] = frozenset(S)
-
-                print(newVCs)
                 return newVCs
             # Introduce node
             if len(adjEdges) == 1 and len(node.obj) > len(adjEdges[0].obj):
-                print("INTRODUCE")
                 # Check validity of introduce node i.e adjEdges[0].obj - node.obj == {}
                 newNodes = (bag - adjEdges[0].obj)
 
@@ -7048,6 +7039,8 @@ class Graph(GenericGraph):
                         all_subsets.append(set(subset))  # Convert the tuple back to a set
                 
                 for S in all_subsets:
+
+                    # NOT HANDLING EMPTY SET?????
                     excludedNodes = bag - S
                     edgeNotCovered = False
                     # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
@@ -7064,28 +7057,13 @@ class Graph(GenericGraph):
                         newVCs[frozenset(S)] = V
                     else:
                         # Check if there are any new nodes in the set which don't exist in the below bag
-                        print(type(S))
-                        print(type(newNodes))
-                        print(type(set(newNodes)))
-                        
-                        if S.intersection(set(newNodes)):
-                            newVCs[frozenset(S)] = set(CVC[frozenset(S-set(newNodes))]).union(set(newNodes))
-                        else:
+                        if set(newNodes).isdisjoint(S) or len(S) == 0:
                             newVCs[frozenset(S)] = CVC[frozenset(S)]
-
-                print("INTRODUCE")
-                print(CVC)
-                print(newNodes)
-                print("BAG")
-                print(bag)
-                print("ADJ EDGES")
-                print(adjEdges)
-                print(newVCs)
-                print("INTRODUCE END")
+                        else:
+                            newVCs[frozenset(S)] = set(CVC[frozenset(S-set(newNodes))]).union(set(newNodes))
                 return newVCs
             # Forget
             if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0].obj):
-                print("FORGET")
 
                 # Valid vertex covers when the new node is included
                 newVCs = {}
@@ -7107,29 +7085,17 @@ class Graph(GenericGraph):
                             if len(VC) < len(bestVC):
                                 bestVC = VC
                     newVCs[frozenset(S)] = bestVC
-                print("FORGET")
-                print(CVC)
-                print("BAG")
-                print(bag)
-                print("ADJ EDGES")
-                print(adjEdges)
-                print(newVCs)
-                print("FORGEWT END")
                 return newVCs
             # Child Node is identical. This should not exist in a nice tree decomp and is here for debugging
             if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
                 r= recurse(adjEdges[0],node)
                 return r
             if len(adjEdges) >= 2:
-                print("JOIN")
                 newVCs = {}
                 childMVCs = []
 
                 for child in adjEdges:
-                    print(child)
-                    print(type(child))
                     childMVCs.append(recurse(child,node))
-
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
                 
@@ -7141,14 +7107,12 @@ class Graph(GenericGraph):
                     S= frozenset(S1)
                     newVC = {}
                     for MVC in childMVCs:
-                        newVC =  set(MVC[S]).union(set(MVC[S]))
+                        newVC = set(newVC).union(set(MVC[S]))
                     newVCs[S] = newVC
 
                 return newVCs
             else:            
                 print("invalid")
-                print(node)
-                print(adjEdges)
                 raise ValueError("T is not a valid nice tree decomposition")
 
         # Solves the problem for the root bag
