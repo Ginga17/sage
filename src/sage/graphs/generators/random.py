@@ -1455,6 +1455,39 @@ def RandomTreePowerlaw(n, gamma=3, tries=1000, seed=None):
         return False
 
 
+def RandomKTree(n, k, seed=None):
+    r"""
+    Returns a random k-tree on `n` nodes.
+
+    """
+
+    # Or maybe start with a complete graph?
+    from sage.graphs.generators.basic import CompleteGraph
+    g = CompleteGraph(k)
+    if n < k:
+        raise ValueError("n must be greater than or equal to k")
+
+    if seed is not None:
+        set_random_seed(seed)
+
+    # Randomly choose a row, and then select k (all but 1) of the columns 
+    # cliques [n-k][k] = [list(range(k+1))]
+    cliques = [list(range(k+1))]
+
+    for i in range(1, n):
+        newVertex = k+i
+        # copiedClique = cliques[randint(0, i)]  
+        copiedClique = cliques[randint(0, len(cliques)-1)].copy()
+        copiedClique[randint(0, k)] = newVertex 
+        cliques.append(copiedClique)
+        for u in copiedClique:
+            for v in copiedClique:
+                if u != v:
+                    g.add_edge(u, v)
+    print(cliques)
+    return g
+
+
 def RandomRegular(d, n, seed=None):
     r"""
     Return a random `d`-regular graph on `n` vertices, or ``False`` on failure.
