@@ -6855,30 +6855,43 @@ class Graph(GenericGraph):
 
     def is_vertex_cover(self, vertex_cover):
         g=self
-        for edge in g.edges(labels=False):
+        for edge in g.edges(labels=False, sort=False):
             u, v = edge
             if u not in vertex_cover and v not in vertex_cover:
                 return False
         return True
 
     # T is a tree decomposition of g(self)
-    def vertex_cover_from_ntd(self):
-    # def vertex_cover_from_ntd(self,T, rootNode):
-        T,rootNode = self.nice_tree_decomposition()
+    def vertex_cover_from_ntd(self, T, rootNode):
+        """
+        TESTS:
 
+        The two algorithms should return the same result::
+
+           sage: g = graphs.RandomGNP(10, .5)
+           sage: vc1 = g.vertex_cover(algorithm="MILP")
+           sage: vc2 = g.vertex_cover_from_ntd()
+           sage: len(vc1) == len(vc2)
+           True
+           sage: g.is_vertex_cover(vc2)
+           True
+
+        """
+    # def vertex_cover_from_ntd(self,T, rootNode):
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
-        V = set(g.vertices())
-        print(V)
+        V= set(g.vertices(False))
         from itertools import combinations
 
         def recurse(node,parent=None):
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
             bag=node.obj
+
             if (parent is not None):
                 adjEdges.remove(parent)
+
             # Leaf Node
             if len(adjEdges) == 0:
                 return {frozenset():{},frozenset(bag):bag}
@@ -6888,33 +6901,30 @@ class Graph(GenericGraph):
 
                 newVCs = {}
                 CVC = recurse(adjEdges[0], node)
-                all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
 
                 for subset_size in range(len(input_list) + 1):
                     for subset in combinations(input_list, subset_size):
-                        all_subsets.append(set(subset))  # Convert the tuple back to a set
-                
-                for S in all_subsets:
-                    excludedNodes = bag - S
-                    edgeNotCovered = False
-                    # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
-                    for i in excludedNodes:
-                        excludedEdges = Gedges[i]
-                        for e in excludedEdges:
-                            # Checks if this subset S contains any edges within the bag that are not covered by S
-                            if (e in excludedNodes):
-                                newVCs[frozenset(S)] = V
-                                edgeNotCovered = True
+                        S= set(subset)
+                        excludedNodes = bag - S
+                        edgeNotCovered = False
+                        # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                        for i in excludedNodes:
+                            excludedEdges = Gedges[i]
+                            for e in excludedEdges:
+                                # Checks if this subset S contains any edges within the bag that are not covered by S
+                                if (e in excludedNodes):
+                                    newVCs[frozenset(S)] = V
+                                    edgeNotCovered = True
+                                    break
+                            if (edgeNotCovered):
                                 break
-                        if (edgeNotCovered):
-                            break
-                    if (edgeNotCovered is False):
-                        # Check if any new nodes are in S
-                        if(newNode in S):
-                            newVCs[frozenset(S)] = set(CVC[frozenset(S-{newNode})]).union({newNode})
-                        else:
-                            newVCs[frozenset(S)] = CVC[frozenset(S)]
+                        if (edgeNotCovered is False):
+                            # Check if any new nodes are in S
+                            if(newNode in S):
+                                newVCs[frozenset(S)] = set(CVC[frozenset(S-{newNode})]).union({newNode})
+                            else:
+                                newVCs[frozenset(S)] = CVC[frozenset(S)]
 
                 return newVCs
             # Forget
@@ -6928,17 +6938,14 @@ class Graph(GenericGraph):
                 
                 for subset_size in range(len(input_list) + 1):
                     for subset in combinations(input_list, subset_size):
-                        all_subsets.append(set(subset))  # Convert the tuple back to a set
-                
-                # Check CVC for all values of S
-                for S in all_subsets:
-                    excludedNodes = bag - S
-                    bestVC = V
-                    for S1, VC in CVC.items():
-                        if (S <= S1 and set(excludedNodes).isdisjoint(S1)):
-                            if len(VC) < len(bestVC):
-                                bestVC = VC
-                    newVCs[frozenset(S)] = bestVC
+                        S=set(subset)
+                        excludedNodes = bag - S
+                        bestVC = V
+                        for S1, VC in CVC.items():
+                            if (S <= S1 and set(excludedNodes).isdisjoint(S1)):
+                                if len(VC) < len(bestVC):
+                                    bestVC = VC
+                        newVCs[frozenset(S)] = bestVC
 
                 return newVCs                
             # Child Node has same bag size. This should not exist in a nice tree decomp and is here for debugging
@@ -6957,11 +6964,8 @@ class Graph(GenericGraph):
                 
                 for subset_size in range(len(input_list) + 1):
                     for subset in combinations(input_list, subset_size):
-                        all_subsets.append(set(subset))  # Convert the tuple back to a set
-                
-                for S1 in all_subsets:
-                    S= frozenset(S1)
-                    newVCs[S] = set(LeftMVC[S]).union(set(RightMVC[S]))
+                        S= frozenset(set(subset))
+                        newVCs[S] = set(LeftMVC[S]).union(set(RightMVC[S]))
 
                 return newVCs
             else:            
@@ -6980,17 +6984,32 @@ class Graph(GenericGraph):
                 bestVC = VC
         return list(bestVC)
 
-    def vertex_cover_from_semi_ntd(self):
+    def vertex_cover_from_semi_ntd(self, T, rootNode):
+        """
+        TESTS:
+
+        The two algorithms should return the same result::
+
+           sage: g = graphs.RandomGNP(10, .5)
+           sage: vc1 = g.vertex_cover(algorithm="MILP")
+           sage: vc2 = g.vertex_cover_from_semi_ntd()
+           sage: len(vc1) == len(vc2)
+           True
+           sage: g.is_vertex_cover(vc2)
+           True
+
+        """
     # def vertex_cover_from_ntd(self,T, rootNode):
-        T,rootNode = self.semi_nice_tree_decomposition()
 
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
-        V = set(g.vertices())
+        V= set(g.vertices(False))
+
         from itertools import combinations
 
         def recurse(node,parent=None):
+
             # Get adjacent nodes in the standard decomposition
             adjEdges = TDedges[node]
             bag=node.obj
@@ -7039,7 +7058,6 @@ class Graph(GenericGraph):
                         all_subsets.append(set(subset))  # Convert the tuple back to a set
                 
                 for S in all_subsets:
-
                     # NOT HANDLING EMPTY SET?????
                     excludedNodes = bag - S
                     edgeNotCovered = False
@@ -7060,11 +7078,10 @@ class Graph(GenericGraph):
                         if set(newNodes).isdisjoint(S) or len(S) == 0:
                             newVCs[frozenset(S)] = CVC[frozenset(S)]
                         else:
-                            newVCs[frozenset(S)] = set(CVC[frozenset(S-set(newNodes))]).union(set(newNodes))
+                            newVCs[frozenset(S)] = set(CVC[frozenset(S-set(newNodes))]).union(S)
                 return newVCs
             # Forget
             if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0].obj):
-
                 # Valid vertex covers when the new node is included
                 newVCs = {}
                 CVC = recurse(adjEdges[0], node)
@@ -7096,6 +7113,7 @@ class Graph(GenericGraph):
 
                 for child in adjEdges:
                     childMVCs.append(recurse(child,node))
+
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
                 
@@ -7109,7 +7127,6 @@ class Graph(GenericGraph):
                     for MVC in childMVCs:
                         newVC = set(newVC).union(set(MVC[S]))
                     newVCs[S] = newVC
-
                 return newVCs
             else:            
                 print("invalid")

@@ -1455,42 +1455,53 @@ def RandomTreePowerlaw(n, gamma=3, tries=1000, seed=None):
         return False
 
 
+# def RandomKTree(n, k, seed=None):
+#     r"""
+#     Returns a random k-tree on `n` nodes.
+
+#     """
+
+#     # Or maybe start with a complete graph?
+#     from sage.graphs.generators.basic import CompleteGraph
+#     g = CompleteGraph(k)
+#     if n < k:
+#         raise ValueError("n must be greater than or equal to k")
+
+#     if seed is not None:
+#         set_random_seed(seed)
+
+#     # Randomly choose a row, and then select k (all but 1) of the columns 
+#     # cliques [n-k][k] = [list(range(k+1))]
+#     cliques = [list(range(k+1))]
+
+#     for i in range(1, n):
+#         newVertex = k+i
+#         # copiedClique = cliques[randint(0, i)]  
+#         copiedClique = cliques[randint(0, len(cliques)-1)].copy()
+#         copiedClique[randint(0, k)] = newVertex 
+#         cliques.append(copiedClique)
+#         for u in copiedClique:
+#             for v in copiedClique:
+#                 if u != v:
+#                     g.add_edge(u, v)
+#     return g
+
+
+
 def RandomKTree(n, k, seed=None):
     r"""
     Returns a random k-tree on `n` nodes.
 
-    """
-
-    # Or maybe start with a complete graph?
-    from sage.graphs.generators.basic import CompleteGraph
-    g = CompleteGraph(k)
-    if n < k:
-        raise ValueError("n must be greater than or equal to k")
-
-    if seed is not None:
-        set_random_seed(seed)
-
-    # Randomly choose a row, and then select k (all but 1) of the columns 
-    # cliques [n-k][k] = [list(range(k+1))]
-    cliques = [list(range(k+1))]
-
-    for i in range(1, n):
-        newVertex = k+i
-        # copiedClique = cliques[randint(0, i)]  
-        copiedClique = cliques[randint(0, len(cliques)-1)].copy()
-        copiedClique[randint(0, k)] = newVertex 
-        cliques.append(copiedClique)
-        for u in copiedClique:
-            for v in copiedClique:
-                if u != v:
-                    g.add_edge(u, v)
-    return g
-
-
-
-def RandomKTree(n, k, seed=None):
-    r"""
-    Returns a random k-tree on `n` nodes.
+    TESTS::
+        
+        sage: set_random_seed(0)
+        sage: g=graphs.RandomKTree(50,5)
+        sage: g.size()
+        235
+        sage: len(g.vertices(sort=False))
+        50
+        sage: g.treewidth()
+        5
 
     """
 
@@ -1499,11 +1510,11 @@ def RandomKTree(n, k, seed=None):
     # g = CompleteGraph(k).copy()
     G = Graph(n)
     from math import pi
-    if n == 1:
+    if k == 1:
         G.set_pos({0: (0, 0)})
     else:
-        G._circle_embedding(list(range(n)), angle=pi/2)
-    G.add_edges(((i, j) for i in range(n) for j in range(i + 1, n)))
+        G._circle_embedding(list(range(k)), angle=pi/2)
+    G.add_edges(((i, j) for i in range(k) for j in range(i + 1, k)))
 
     if n < k:
         raise ValueError("n must be greater than or equal to k")
@@ -1538,8 +1549,8 @@ def RandomSubKTree(n, k, x, seed=None):
 
     g = RandomKTree(n,k,seed).copy()
 
-    # Check that 
-    if x > len(g.edges()):
+    # Check that x doesn't delete too many edgesg.ew
+    if x > len(g.edges(sort=False)):
         raise ValueError("x must be less than n.")
     
     for i in range(1, x):

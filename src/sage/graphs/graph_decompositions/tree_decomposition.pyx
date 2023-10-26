@@ -475,6 +475,14 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
     a tree decomposition. Once this has been complete, a recursive function is
     utilised to add any necessary nodes and edges to produce a 'nice' tree 
     decomposition.
+
+
+    TESTS::
+        sage: g = graphs.PetersenGraph()
+        sage: T = g.nice_tree_decomposition(certificate=True)
+        sage: from sage.graphs.graph_decompositions.tree_decomposition import is_valid_tree_decomposition
+        sage: is_valid_tree_decomposition(g, T)
+        True
     """
     G = treewidth(g, certificate=True,k=None, kmin=None, algorithm=None)
 
@@ -541,9 +549,6 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             return newEdges
         # When node has 2 or more children, join nodes are added
         else:            
-            print("JOIN")
-            print(node.obj)
-            print(adjEdges)
             newEdges = []
 
             leftIndex=0
