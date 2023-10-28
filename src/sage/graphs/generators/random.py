@@ -1454,40 +1454,6 @@ def RandomTreePowerlaw(n, gamma=3, tries=1000, seed=None):
     except networkx.NetworkXError:
         return False
 
-
-# def RandomKTree(n, k, seed=None):
-#     r"""
-#     Returns a random k-tree on `n` nodes.
-
-#     """
-
-#     # Or maybe start with a complete graph?
-#     from sage.graphs.generators.basic import CompleteGraph
-#     g = CompleteGraph(k)
-#     if n < k:
-#         raise ValueError("n must be greater than or equal to k")
-
-#     if seed is not None:
-#         set_random_seed(seed)
-
-#     # Randomly choose a row, and then select k (all but 1) of the columns 
-#     # cliques [n-k][k] = [list(range(k+1))]
-#     cliques = [list(range(k+1))]
-
-#     for i in range(1, n):
-#         newVertex = k+i
-#         # copiedClique = cliques[randint(0, i)]  
-#         copiedClique = cliques[randint(0, len(cliques)-1)].copy()
-#         copiedClique[randint(0, k)] = newVertex 
-#         cliques.append(copiedClique)
-#         for u in copiedClique:
-#             for v in copiedClique:
-#                 if u != v:
-#                     g.add_edge(u, v)
-#     return g
-
-
-
 def RandomKTree(n, k, seed=None):
     r"""
     Returns a random k-tree on `n` nodes.
@@ -1507,38 +1473,24 @@ def RandomKTree(n, k, seed=None):
 
     from sage.graphs.generators.basic import CompleteGraph
     
-    # g = CompleteGraph(k).copy()
-    G = Graph(n)
-    from math import pi
-    if k == 1:
-        G.set_pos({0: (0, 0)})
-    else:
-        G._circle_embedding(list(range(k)), angle=pi/2)
-    G.add_edges(((i, j) for i in range(k) for j in range(i + 1, k)))
-
-    if n < k:
-        raise ValueError("n must be greater than or equal to k")
-
-    if seed is not None:
-        set_random_seed(seed)
-
-    # Randomly choose a row, and then select k (all but 1) of the columns 
+    g = CompleteGraph(k)
+    g.name("")
+    
     cliques = [list(range(k+1))]
 
-    g=G
-
+    # Randomly choose a row, and copy 1 of the cliques
+    # One of those vertices is then replaced with a new vertex 
     for i in range(1, n-k):
         newVertex = k+i
         copiedClique = cliques[randint(0, len(cliques)-1)].copy()
         copiedClique[randint(0, k)] = newVertex 
         cliques.append(copiedClique)
         for u in copiedClique:
-            for v in copiedClique:
-                if u != v:
-                    g.add_edge(u, v)
-    return g
+            if u != newVertex:
+                g.add_edge(u, newVertex)
+    return g    
 
-def RandomSubKTree(n, k, x, seed=None):
+def RandomPartialKTree(n, k, x, seed=None):
     r"""
     Forms a random k-tree on `n` nodes, and then removes `x` nodes from it.
     This will create a random graph with approximately `k` treewidth.

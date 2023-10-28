@@ -367,7 +367,7 @@ __append_to_doc(
      "RandomToleranceGraph",
      "RandomTree",
      "RandomKTree",
-     "RandomSubKTree",
+     "RandomPartialKTree",
      "RandomTreePowerlaw",
      "RandomTriangulation",
      "RandomUnitDiskGraph"])
@@ -2629,7 +2629,7 @@ class GraphGenerators():
     RandomTreePowerlaw = staticmethod(random.RandomTreePowerlaw)
     RandomTree = staticmethod(random.RandomTree)
     RandomKTree = staticmethod(random.RandomKTree)
-    RandomSubKTree = staticmethod(random.RandomSubKTree)
+    RandomPartialKTree = staticmethod(random.RandomPartialKTree)
     RandomTriangulation = staticmethod(random.RandomTriangulation)
     RandomUnitDiskGraph = staticmethod(random.RandomUnitDiskGraph)
 

@@ -1,6 +1,6 @@
 
 print("Results on Sub K Tree with n=50, treewidth=3")
-g = graphs.RandomSubKTree(50,3,5)
+g = graphs.RandomPartialKTree(50,3,5)
 iterations = 5
 g.treewidth()
 
