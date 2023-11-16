@@ -1,3 +1,4 @@
+# sage.doctest: needs sage.combinat sage.modules
 r"""
 Affine factorization crystal of type `A`
 """
@@ -95,7 +96,7 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
         ValueError: x cannot be in reduced word of s0*s3*s2
     """
     @staticmethod
-    def __classcall_private__(cls, w, n, x = None, k = None):
+    def __classcall_private__(cls, w, n, x=None, k=None):
         r"""
         Classcall to mend the input.
 
@@ -120,7 +121,7 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
             w = w0*(w1.inverse())
         return super().__classcall__(cls, w, n, x)
 
-    def __init__(self, w, n, x = None):
+    def __init__(self, w, n, x=None):
         r"""
         EXAMPLES::
 
@@ -146,7 +147,7 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
             sage: B = crystals.AffineFactorization(w,3)
             sage: TestSuite(B).run()  # long time
         """
-        Parent.__init__(self, category = ClassicalCrystals())
+        Parent.__init__(self, category=ClassicalCrystals())
         self.n = n
         self.k = w.parent().n-1
         self.w = w
@@ -250,12 +251,12 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
             k = self.parent().k
             n = self.parent().n
             a = min(b[0])
-            left = [j for j in (self.value[n-i-1]).reduced_word() if j != (a+x)%(k+1)]
-            right = [(j-x)%(k+1) for j in (self.value[n-i]).reduced_word()]
-            m = max([j for j in range(a) if (j+x)%(k+1) not in left])
+            left = [j for j in (self.value[n-i-1]).reduced_word() if j != (a+x) % (k+1)]
+            right = [(j-x) % (k+1) for j in (self.value[n-i]).reduced_word()]
+            m = max([j for j in range(a) if (j+x) % (k+1) not in left])
             right += [m+1]
             right.sort(reverse=True)
-            right = [(j+x)%(k+1) for j in right]
+            right = [(j+x) % (k+1) for j in right]
             t = [self.value[j] for j in range(n-i-1)] + [W.from_reduced_word(left)] + [W.from_reduced_word(right)] + [self.value[j] for j in range(n-i+1,n)]
             return self.parent()(tuple(t))
 
@@ -284,12 +285,12 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
             k = self.parent().k
             n = self.parent().n
             a = max(b[1])
-            right = [j for j in (self.value[n-i]).reduced_word() if j != (a+x)%(k+1)]
-            left = [(j-x)%(k+1) for j in (self.value[n-i-1]).reduced_word()]
-            m = min([j for j in range(a+1,k+2) if (j+x)%(k+1) not in right])
+            right = [j for j in (self.value[n-i]).reduced_word() if j != (a+x) % (k+1)]
+            left = [(j-x) % (k+1) for j in (self.value[n-i-1]).reduced_word()]
+            m = min([j for j in range(a+1,k+2) if (j+x) % (k+1) not in right])
             left += [m-1]
             left.sort(reverse=True)
-            left = [(j+x)%(k+1) for j in left]
+            left = [(j+x) % (k+1) for j in left]
             t = [self.value[j] for j in range(n-i-1)] + [W.from_reduced_word(left)] + [W.from_reduced_word(right)] + [self.value[j] for j in range(n-i+1,n)]
             return self.parent()(tuple(t))
 
@@ -311,13 +312,13 @@ class AffineFactorizationCrystal(UniqueRepresentation, Parent):
             k = self.parent().k
             right = (self.value[n-i]).reduced_word()
             left = (self.value[n-i-1]).reduced_word()
-            right_n = [(j-x)%(k+1) for j in right]
-            left_n = [(j-x)%(k+1) for j in left]
+            right_n = [(j-x) % (k+1) for j in right]
+            left_n = [(j-x) % (k+1) for j in left]
             left_unbracketed = []
             while left_n:
                 m = max(left_n)
                 left_n.remove(m)
-                l = [j for j in right_n if j>m]
+                l = [j for j in right_n if j > m]
                 if l:
                     right_n.remove(min(l))
                 else:
@@ -428,7 +429,7 @@ def affine_factorizations(w, l, weight=None):
        [[1, 1, 1, s1, s2*s1, s3*s2*s1]]
     """
     if weight is None:
-        if l==0:
+        if l == 0:
             if w.is_one():
                 return [[]]
             else:
@@ -438,7 +439,7 @@ def affine_factorizations(w, l, weight=None):
     else:
         if l != len(weight):
             return []
-        if l==0:
+        if l == 0:
             if w.is_one():
                 return [[]]
             else:

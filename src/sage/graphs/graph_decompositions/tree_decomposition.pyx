@@ -1395,7 +1395,7 @@ cdef class TreelengthConnected:
             sig_free(self.c_distances)
             sig_free(self.distances)
 
-    cdef bint _treelength(self, g, k):
+    cdef bint _treelength(self, g, k) noexcept:
         r"""
         Check whether the treelength of `g` is at most `k`.
 
@@ -1464,7 +1464,7 @@ cdef class TreelengthConnected:
 
                 # Removing v may have disconnected cc. We iterate on its
                 # connected components
-                for _cci in g.subgraph(ccv).connected_components():
+                for _cci in g.subgraph(ccv).connected_components(sort=False):
                     cci = frozenset(_cci)
 
                     # The recursive subcalls. We remove on-the-fly the vertices

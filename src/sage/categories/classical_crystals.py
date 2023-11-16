@@ -1,3 +1,4 @@
+# sage.doctest: needs sage.graphs sage.combinat
 r"""
 Classical Crystals
 """

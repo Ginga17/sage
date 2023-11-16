@@ -31,7 +31,6 @@ AUTHORS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-from sage.dynamics.arithmetic_dynamics.generic_ds import DynamicalSystem
 from sage.dynamics.complex_dynamics.mandel_julia_helper import (fast_mandelbrot_plot,
                                                                 fast_external_ray,
                                                                 convert_to_pixels,
@@ -55,6 +54,8 @@ from sage.misc.prandom import randint
 from sage.calculus.var import var
 from sage.rings.fraction_field import is_FractionField
 from sage.categories.function_fields import FunctionFields
+
+lazy_import('sage.dynamics.arithmetic_dynamics.generic_ds', 'DynamicalSystem')
 
 EPS = 0.00001
 
@@ -206,21 +207,21 @@ def mandelbrot_plot(f=None, **kwds):
 
     from ipywidgets.widgets import FloatSlider, IntSlider, ColorPicker, interact
     widgets = dict(
-                   x_center = FloatSlider(min=-1.0, max=1.0, step=EPS,
+                   x_center=FloatSlider(min=-1.0, max=1.0, step=EPS,
                                           value=x_center, description="Real center"),
-                   y_center = FloatSlider(min=-1.0, max=1.0, step=EPS,
+                   y_center=FloatSlider(min=-1.0, max=1.0, step=EPS,
                                           value=y_center, description="Imag center"),
-                   image_width = FloatSlider(min=EPS, max=4.0, step=EPS,
+                   image_width=FloatSlider(min=EPS, max=4.0, step=EPS,
                                              value=image_width, description="Width"),
-                   max_iteration = IntSlider(min=0, max=1000,
+                   max_iteration=IntSlider(min=0, max=1000,
                                              value=max_iteration, description="Iterations"),
-                   pixel_count = IntSlider(min=10, max=1000,
+                   pixel_count=IntSlider(min=10, max=1000,
                                            value=pixel_count, description="Pixels"),
-                   level_sep = IntSlider(min=1, max=20,
+                   level_sep=IntSlider(min=1, max=20,
                                          value=level_sep, description="Color sep"),
-                   color_num = IntSlider(min=1, max=100,
+                   color_num=IntSlider(min=1, max=100,
                                          value=number_of_colors, description="# Colors"),
-                   base_color = ColorPicker(value=Color(base_color).html_color(),
+                   base_color=ColorPicker(value=Color(base_color).html_color(),
                                             description="Base color"),
                    )
 
@@ -396,7 +397,7 @@ def external_ray(theta, **kwds):
             pixel[i, j] = old_pixel[i, j]
 
     # Make sure that theta is a list so loop below works
-    if type(theta) != list:
+    if not isinstance(theta, list):
         theta = [theta]
 
     # Check if theta is in the interval [0,1]
@@ -729,25 +730,25 @@ def julia_plot(f=None, **kwds):
             from ipywidgets.widgets import FloatSlider, IntSlider, \
                                            ColorPicker, interact
             widgets = dict(
-                c_real = FloatSlider(min=-2.0, max=2.0, step=EPS,
+                c_real=FloatSlider(min=-2.0, max=2.0, step=EPS,
                                   value=c_real, description="Real c"),
-                c_imag = FloatSlider(min=-2.0, max=2.0, step=EPS,
+                c_imag=FloatSlider(min=-2.0, max=2.0, step=EPS,
                                   value=c_imag, description="Imag c"),
-                x_center = FloatSlider(min=-1.0, max=1.0, step=EPS,
+                x_center=FloatSlider(min=-1.0, max=1.0, step=EPS,
                                   value=x_center, description="Real center"),
-                y_center = FloatSlider(min=-1.0, max=1.0, step=EPS,
+                y_center=FloatSlider(min=-1.0, max=1.0, step=EPS,
                                   value=y_center, description="Imag center"),
-                image_width = FloatSlider(min=EPS, max=4.0, step=EPS,
+                image_width=FloatSlider(min=EPS, max=4.0, step=EPS,
                                   value=image_width, description="Width"),
-                max_iteration = IntSlider(min=0, max=1000,
+                max_iteration=IntSlider(min=0, max=1000,
                                   value=max_iteration, description="Iterations"),
-                pixel_count = IntSlider(min=10, max=1000,
+                pixel_count=IntSlider(min=10, max=1000,
                                   value=pixel_count, description="Pixels"),
-                level_sep = IntSlider(min=1, max=20,
+                level_sep=IntSlider(min=1, max=20,
                                   value=level_sep, description="Color sep"),
-                color_num = IntSlider(min=1, max=100,
+                color_num=IntSlider(min=1, max=100,
                                   value=number_of_colors, description="# Colors"),
-                base_color = ColorPicker(value=base_color.html_color(),
+                base_color=ColorPicker(value=base_color.html_color(),
                                          description="Base color"),
             )
             if mandelbrot:

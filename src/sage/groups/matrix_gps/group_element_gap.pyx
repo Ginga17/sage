@@ -14,11 +14,11 @@ Matrix group elements implemented in GAP
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-#                  http://www.gnu.org/licenses/
+#                  https://www.gnu.org/licenses/
 #*****************************************************************************
 
 from sage.groups.matrix_gps.group_element cimport is_MatrixGroupElement
-from sage.libs.gap.element cimport GapElement, GapElement_List
+from sage.libs.gap.element cimport GapElement
 from sage.misc.cachefunc import cached_method
 from sage.structure.element import is_Matrix
 from sage.structure.factorization import Factorization
@@ -136,7 +136,7 @@ cdef class MatrixGroupElement_gap(ElementLibGAP):
         """
         return self.matrix()._latex_()
 
-    cpdef _act_on_(self, x, bint self_on_left):
+    cpdef _act_on_(self, x, bint self_on_left) noexcept:
         """
         EXAMPLES::
 
@@ -157,7 +157,7 @@ cdef class MatrixGroupElement_gap(ElementLibGAP):
             except TypeError:
                 return None
 
-    cpdef _richcmp_(self, other, int op):
+    cpdef _richcmp_(self, other, int op) noexcept:
         """
         EXAMPLES::
 
@@ -223,14 +223,14 @@ cdef class MatrixGroupElement_gap(ElementLibGAP):
             sage: F = GF(3); MS = MatrixSpace(F,2,2)
             sage: G = MatrixGroup([MS([1,1,0,1])])
             sage: g = G.gen(0)
-            sage: M = matrix(GF(9), g); M; parent(M)
+            sage: M = matrix(GF(9), g); M; parent(M)                                    # needs sage.rings.finite_rings
             [1 1]
             [0 1]
             Full MatrixSpace of 2 by 2 dense matrices over Finite Field in z2 of size 3^2
         """
         return self.matrix()
 
-    cpdef list list(self):
+    cpdef list list(self) noexcept:
         """
         Return list representation of this matrix.
 

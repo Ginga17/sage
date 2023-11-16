@@ -209,8 +209,8 @@ cdef class LFunctionZeroSum_abstract(SageObject):
             (11, -0.21799047934530644)
         """
         if not python_floats:
-            return [self.cn(i) for i in xrange(n + 1)]
-        return [float(self.cn(i)) for i in xrange(n + 1)]
+            return [self.cn(i) for i in range(n + 1)]
+        return [float(self.cn(i)) for i in range(n + 1)]
 
     def digamma(self, s, include_constant_term=True):
         r"""
@@ -1066,7 +1066,7 @@ cdef class LFunctionZeroSum_EllipticCurve(LFunctionZeroSum_abstract):
                                        double logq,
                                        double thetaq,
                                        double sqrtq,
-                                       double z):
+                                       double z) noexcept:
         r"""
         Private cdef method to compute the logarithmic derivative
         summand for the sinc^2 sum at prime values for when
@@ -1096,7 +1096,7 @@ cdef class LFunctionZeroSum_EllipticCurve(LFunctionZeroSum_abstract):
                                        double t,
                                        int ap,
                                        double p,
-                                       double logp):
+                                       double logp) noexcept:
         r"""
         Private cdef method to compute the logarithmic derivative
         summand for the sinc^2 sum at prime values for when
@@ -1109,7 +1109,7 @@ cdef class LFunctionZeroSum_EllipticCurve(LFunctionZeroSum_abstract):
         logp = c_log(p)
         return -(t - logp) * (logp / p) * ap
 
-    cpdef _zerosum_sincsquared_fast(self, Delta=1, bad_primes=None):
+    cpdef _zerosum_sincsquared_fast(self, Delta=1, bad_primes=None) noexcept:
         r"""
         A faster cythonized implementation of self._zerosum_sincsquared().
 

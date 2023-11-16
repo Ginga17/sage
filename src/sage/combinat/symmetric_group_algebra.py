@@ -1,3 +1,4 @@
+# sage.doctest: needs sage.combinat sage.modules sage.groups
 r"""
 Symmetric Group Algebra
 """
@@ -24,8 +25,11 @@ from sage.rings.rational_field import QQ
 from sage.arith.misc import factorial
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
-from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
+from sage.misc.lazy_import import lazy_import
 from sage.misc.persist import register_unpickle_override
+
+lazy_import('sage.groups.perm_gps.permgroup_element', 'PermutationGroupElement')
+
 
 # TODO: Remove this function and replace it with the class
 # TODO: Create parents for other bases (such as the seminormal basis)
@@ -1339,14 +1343,13 @@ class SymmetricGroupAlgebra_n(GroupAlgebra_class):
             sage: def test_rsw_comm(n):
             ....:     QSn = SymmetricGroupAlgebra(QQ, n)
             ....:     rsws = [QSn.rsw_shuffling_element(k) for k in range(2, n)]
-            ....:     return all( all( rsws[i] * rsws[j] == rsws[j] * rsws[i]
-            ....:                      for j in range(i) )
-            ....:                 for i in range(len(rsws)) )
+            ....:     return all(ri * rsws[j] == rsws[j] * ri
+            ....:                for i, ri in enumerate(rsws) for j in range(i))
             sage: test_rsw_comm(3)
             True
-            sage: test_rsw_comm(4)
+            sage: test_rsw_comm(4)   # long time
             True
-            sage: test_rsw_comm(5)   # long time
+            sage: test_rsw_comm(5)   # not tested
             True
 
         .. NOTE::
