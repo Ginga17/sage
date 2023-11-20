@@ -258,7 +258,7 @@ def reduced_tree_decomposition(T):
 
     EXAMPLES::
 
-        sage: from sage.graphs.graph_decompositions.tree_decomposition import reduced_tree_decomposition
+    ons.tree_decomposition import reduced_tree_decomposition
         sage: from sage.graphs.graph_decompositions.tree_decomposition import is_valid_tree_decomposition
         sage: G = graphs.PathGraph(3)
         sage: T = Graph()
@@ -430,6 +430,353 @@ def _from_tree_decompositions_of_atoms_to_tree_decomposition(T_atoms, cliques):
                                "to sage-devel@googlegroups.com")
 
     return T
+
+
+def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
+    r"""
+    Compute a nice tree decomposition of `g`.
+    A nice tree decomposition is a tree decomposition of a graph g, where every
+    node in the decomposition can be categorised as one of the following:
+        • Leaf node: has no children and a bag size of 1.
+        • Introduce node: has one child. The child has the same vertices as the
+          parent with one deleted.
+        • Forget node: has one child. The child has the same vertices as the 
+          parent with one added.
+        • Join node: has two children, both having identical bags to the parent
+
+    INPUT:
+
+    - ``g`` -- a sage Graph
+
+    - ``k`` -- integer (default: ``None``); indicates the width to be
+      considered. When ``k`` is an integer, the method checks that the graph has
+      treewidth `\leq k`. If ``k`` is ``None`` (default), the method computes
+      the optimal tree-width.
+
+    - ``kmin`` -- integer (default: ``None``); when specified, search for a
+      tree-decomposition of width at least ``kmin``. This parameter is useful
+      when the graph can be decomposed into atoms.  This parameter is ignored
+      when ``k`` is not ``None`` or when ``algorithm == 'tdlib'``.
+
+    - ``algorithm`` -- whether to use ``"sage"`` or ``"tdlib"`` (requires the
+      installation of the 'tdlib' package). The default behaviour is to use
+      'tdlib' if it is available, and Sage's own algorithm when it is not.
+
+    - ``root`` -- boolean (default: ``True``); whether to return the root of the 
+      nice tree decomposition
+
+    OUTPUT:
+
+    ``g.nice_tree_decomposition()`` returns a nice tree decomposition of ``g``.
+
+    ALGORITHM:
+
+    This function utilises the treewidth(certificate=True) function to generate 
+    a tree decomposition. Once this has been complete, a recursive function is
+    utilised to add any necessary nodes and edges to produce a 'nice' tree 
+    decomposition.
+
+
+    TESTS::
+        sage: g = graphs.PetersenGraph()
+        sage: T = g.nice_tree_decomposition(certificate=True)
+        sage: from sage.graphs.graph_decompositions.tree_decomposition import is_valid_tree_decomposition
+        sage: is_valid_tree_decomposition(g, T)
+        True
+    """
+    G = treewidth(g, certificate=True,k=None, kmin=None, algorithm=None)
+
+    edges = G.to_dictionary()
+
+    #https://ask.sagemath.org/question/47443/plotting-a-labelledorderedtree-with-duplicate-labels/
+    class Wrap(object):
+        def __init__(self, obj):
+            self.obj = obj
+        def __repr__(self):
+            return repr(self.obj)
+        def __iter__(self):
+            return iter(self.obj)
+    
+    rootNode =  Wrap(list(G)[0])
+    # Nice Decomposition
+    from sage.graphs.graph import Graph
+    ND = Graph()
+
+    # Recursive function, adds appropriate nodes below the current node to form a nice tree decomposition
+    def recurse(node,parent=None):
+        # Get adjacent nodes in the standard decomposition
+        adjEdges = edges[node.obj]
+        if (parent != None):
+            adjEdges.remove(parent)
+        # Leaf Node
+        if len(adjEdges) == 0:
+            newEdges = []
+            prevBag =node
+            # Add forget nodes until the last node has 1 element
+            while (len(prevBag.obj) > 1):
+                newSet = Set(prevBag.obj.set() - {prevBag.obj._an_element_()})
+                currBag=Wrap(newSet)
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
+            return newEdges
+
+        # Add introduce and forget nodes to transition between current node and child
+        if len(adjEdges) == 1:
+            child = adjEdges[0]
+            newEdges = []
+
+            # Gets vertices in current bag that need to be removed 
+            notInChild = node.obj - child
+
+            #  Gets vertices in child vertex that need to be added  
+            notInParent = child -node.obj
+
+            prevBag = node
+            # Forget Nodes
+            for i in notInChild:
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+                
+            # Introduce Nodes
+            for i in notInParent:
+                currBag = Wrap(prevBag.obj.union(Set({i})))
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
+            newEdges.extend(recurse(prevBag, node.obj))         #
+            return newEdges
+        # When node has 2 or more children, join nodes are added
+        else:            
+            newEdges = []
+
+            leftIndex=0
+            currParent = node
+
+            while(leftIndex < len(adjEdges)-1):
+            
+                # Form duplicates for join nodes
+                left = Wrap(node.obj)
+                right = Wrap(node.obj)
+  
+                # Pass child to the new join node
+                leftChild = Wrap(adjEdges[leftIndex])         
+
+                #Attach parent to its duplicate nodes
+                newEdges.extend([{currParent,left},{currParent,right}])  
+                
+                # Need to link left to leftChild befor continuing recursion on left child.
+                # left has exactly one child. Recursion cannot immediately be called on left since left is not part of g.
+
+                missingFromChild = left.obj - leftChild.obj;
+                missingFromParent = leftChild.obj - left.obj;
+                prevBag = left;
+                
+                # Adding forget nodes
+                for i in missingFromChild:
+                    currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                    #if (currBag == leftChild):
+                    #    newEdges.append({prevBag,leftChild})
+                    #else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+            
+                # Introduce Nodes
+                for i in missingFromParent:
+                    currBag = Wrap(prevBag.obj.union(Set({i})))
+                    #if (currBag == leftChild):
+                    #    newEdges.append({prevBag,leftChild})
+                    #else:
+                    newEdges.append({prevBag,currBag})
+                    prevBag=currBag
+
+                # Finally  recurse to the child.
+                newEdges.append({prevBag,leftChild})
+                newEdges.extend(recurse(leftChild,node.obj))
+
+                leftIndex+=1
+                currParent=right
+            
+            # 1 child left to assign
+            child = Wrap(adjEdges[leftIndex])
+
+            missingFromChild = currParent.obj - child.obj;
+            missingFromParent = child.obj - currParent.obj;
+            
+            prevBag = currParent;
+            
+            # Adding forget nodes
+            for i in missingFromChild:
+                currBag = Wrap(Set(prevBag.obj.set()-{i}))
+                #if (currBag == leftChild):
+                #    newEdges.append({prevBag,leftChild})
+                #else:
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+                    
+            # Introduce Nodes
+            for i in missingFromParent:
+                currBag = Wrap(prevBag.obj.union(Set({i})))
+                #if (currBag == leftChild):
+                #    newEdges.append({prevBag,leftChild})
+                #else:
+                newEdges.append({prevBag,currBag})
+                prevBag=currBag
+
+
+            newEdges.append({prevBag,child})     
+            newEdges.extend(recurse(child,node.obj))                        
+            return newEdges
+
+    r = recurse(node=rootNode)
+    ND.add_edges(r)
+    if (root):
+        return ND, rootNode
+    return ND
+
+
+def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
+    r"""
+    Compute a nice tree decomposition of `g`.
+    A nice tree decomposition is a tree decomposition of a graph g, where every
+    node in the decomposition can be categorised as one of the following:
+        • Leaf node: has no children and a bag size of 1.
+        • Introduce node: has one child. The child has the same vertices as the
+          parent with one deleted.
+        • Forget node: has one child. The child has the same vertices as the 
+          parent with one added.
+        • Join node: has two children, both having identical bags to the parent
+
+    INPUT:
+
+    - ``g`` -- a sage Graph
+
+    - ``k`` -- integer (default: ``None``); indicates the width to be
+      considered. When ``k`` is an integer, the method checks that the graph has
+      treewidth `\leq k`. If ``k`` is ``None`` (default), the method computes
+      the optimal tree-width.
+
+    - ``kmin`` -- integer (default: ``None``); when specified, search for a
+      tree-decomposition of width at least ``kmin``. This parameter is useful
+      when the graph can be decomposed into atoms.  This parameter is ignored
+      when ``k`` is not ``None`` or when ``algorithm == 'tdlib'``.
+
+    - ``algorithm`` -- whether to use ``"sage"`` or ``"tdlib"`` (requires the
+      installation of the 'tdlib' package). The default behaviour is to use
+      'tdlib' if it is available, and Sage's own algorithm when it is not.
+
+    - ``root`` -- boolean (default: ``True``); whether to return the root of the 
+      nice tree decomposition
+
+    OUTPUT:
+
+    ``g.nice_tree_decomposition()`` returns a nice tree decomposition of ``g``.
+
+    ALGORITHM:
+
+    This function utilises the treewidth(certificate=True) function to generate 
+    a tree decomposition. Once this has been complete, a recursive function is
+    utilised to add any necessary nodes and edges to produce a 'nice' tree 
+    decomposition.
+    """
+    G = treewidth(g, certificate=True,k=None, kmin=None, algorithm=None)
+
+    edges = G.to_dictionary()
+
+    #https://ask.sagemath.org/question/47443/plotting-a-labelledorderedtree-with-duplicate-labels/
+    class Wrap(object):
+        def __init__(self, obj):
+            self.obj = obj
+        def __repr__(self):
+            return repr(self.obj)
+        def __iter__(self):
+            return iter(self.obj)
+    
+    rootNode =  Wrap(list(G)[0])
+    # Nice Decomposition
+    from sage.graphs.graph import Graph
+    ND = Graph()
+
+    # Recursive function, adds appropriate nodes below the current node to form a nice tree decomposition
+    def recurse(node,parent=None):
+        # Get adjacent nodes in the standard decomposition
+        adjEdges = edges[node.obj]
+        if (parent != None):
+            adjEdges.remove(parent)
+        # Leaf Node
+        if len(adjEdges) == 0:
+            #if len(node.obj) == 1:
+            #    return [];
+            # Add forget node to transition to a leaf node with 1 element
+            ##else:
+            #    return [{node,Wrap({node.obj._an_element_()})}]
+            return []
+
+        # Add introduce and forget nodes to transition between current node and child
+        if len(adjEdges) == 1:
+            child = adjEdges[0]
+            childNode = Wrap(child)
+            newEdges = []
+
+            # Gets vertices in current bag that need to be removed 
+            notInChild = node.obj - child
+            #  Gets vertices in child vertex that need to be added  
+            notInParent = child - node.obj
+
+            # If nodes are both added and forgotten between this node and the child,
+            # a linking forget node is needed to split the 2 steps
+            if (len(notInChild) > 0 and len(notInParent) > 0):
+                forgetNode = Wrap(node.obj - notInChild)
+                newEdges.append({node,forgetNode})
+                newEdges.append({forgetNode, childNode})
+
+            else:
+                newEdges.append({node, childNode})
+
+            # Finally  recurse to the child.
+            newEdges.extend(recurse(childNode,node.obj))
+
+            return newEdges
+        # When node has 2 or more children, join nodes are added
+        else:            
+            newEdges = []
+            currParent = node
+
+            for child in adjEdges:            
+                # Form duplicate for join nodes
+                duplicate = Wrap(node.obj)
+  
+                childNode = Wrap(child)         
+
+                # Attach parent to its duplicate nodes
+                newEdges.append({currParent,duplicate})  
+                
+                # Gets vertices in current bag that need to be removed 
+                notInChild = duplicate.obj - child
+                #  Gets vertices in child vertex that need to be added  
+                notInParent = child - duplicate.obj
+                
+                # If nodes are both added and forgotten between this node and the child,
+                # a linking forget node is needed to split the 2 steps
+                if (len(notInChild) > 0 and len(notInParent) > 0):
+                    forgetNode = Wrap(node.obj - notInChild)
+                    newEdges.append({duplicate,forgetNode})
+                    newEdges.append({forgetNode, childNode})
+
+                else:
+                    newEdges.append({duplicate, childNode})
+
+                # Finally  recurse to the child.
+                newEdges.extend(recurse(childNode,node.obj))
+                                 
+            return newEdges
+
+    r = recurse(node=rootNode)
+    ND.add_edges(r)
+    if (root):
+        return ND, rootNode
+    return ND
 
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):

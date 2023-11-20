@@ -6962,6 +6962,295 @@ class Graph(GenericGraph):
         import networkx
         return BipartiteGraph(networkx.make_clique_bipartite(self.networkx_graph(), **kwds))
 
+    def is_vertex_cover(self, vertex_cover):
+        g=self
+        for edge in g.edges(labels=False, sort=False):
+            u, v = edge
+            if u not in vertex_cover and v not in vertex_cover:
+                return False
+        return True
+
+    # T is a tree decomposition of g(self)
+    def vertex_cover_from_ntd(self, T, rootNode):
+        """
+        TESTS:
+
+        The two algorithms should return the same result::
+
+           sage: g = graphs.RandomGNP(10, .5)
+           sage: vc1 = g.vertex_cover(algorithm="MILP")
+           sage: vc2 = g.vertex_cover_from_ntd()
+           sage: len(vc1) == len(vc2)
+           True
+           sage: g.is_vertex_cover(vc2)
+           True
+
+        """
+    # def vertex_cover_from_ntd(self,T, rootNode):
+        g=self
+        TDedges = T.to_dictionary()
+        Gedges = g.to_dictionary()
+        V= set(g.vertices(False))
+        from itertools import combinations
+
+        def recurse(node,parent=None):
+            # Get adjacent nodes in the standard decomposition
+            adjEdges = TDedges[node]
+            bag=node.obj
+
+            if (parent is not None):
+                adjEdges.remove(parent)
+
+            # Leaf Node
+            if len(adjEdges) == 0:
+                return {frozenset():{},frozenset(bag):bag}
+            # Introduce node
+            if len(adjEdges) == 1 and len(node.obj) == 1+ len(adjEdges[0].obj):                
+                newNode = (bag - adjEdges[0].obj)[0]
+
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                input_list = list(bag)  # Convert the set to a list for indexing
+
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        S= set(subset)
+                        excludedNodes = bag - S
+                        edgeNotCovered = False
+                        # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                        for i in excludedNodes:
+                            excludedEdges = Gedges[i]
+                            for e in excludedEdges:
+                                # Checks if this subset S contains any edges within the bag that are not covered by S
+                                if (e in excludedNodes):
+                                    newVCs[frozenset(S)] = V
+                                    edgeNotCovered = True
+                                    break
+                            if (edgeNotCovered):
+                                break
+                        if (edgeNotCovered is False):
+                            # Check if any new nodes are in S
+                            if(newNode in S):
+                                newVCs[frozenset(S)] = set(CVC[frozenset(S-{newNode})]).union({newNode})
+                            else:
+                                newVCs[frozenset(S)] = CVC[frozenset(S)]
+
+                return newVCs
+            # Forget
+            if len(adjEdges) == 1 and len(node.obj) +1 == len(adjEdges[0].obj):
+                
+                # Valid vertex covers when the new node is included
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        S=set(subset)
+                        excludedNodes = bag - S
+                        bestVC = V
+                        for S1, VC in CVC.items():
+                            if (S <= S1 and set(excludedNodes).isdisjoint(S1)):
+                                if len(VC) < len(bestVC):
+                                    bestVC = VC
+                        newVCs[frozenset(S)] = bestVC
+
+                return newVCs                
+            # Child Node has same bag size. This should not exist in a nice tree decomp and is here for debugging
+            if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
+                r= recurse(adjEdges[0],node)
+                return r
+            if len(adjEdges) == 2:
+                newVCs = {}
+
+                LeftMVC = recurse(adjEdges[0], node)
+                
+                RightMVC = recurse(adjEdges[1], node)
+
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        S= frozenset(set(subset))
+                        newVCs[S] = set(LeftMVC[S]).union(set(RightMVC[S]))
+
+                return newVCs
+            else:            
+                print("invalid")
+                print(node)
+                print(adjEdges)
+                raise ValueError("T is not a valid nice tree decomposition")
+
+        # Solves the problem for the root bag
+        MVCDict = recurse(node=rootNode)
+
+        bestVC = V
+        # Finds the smallest vertex cover formed from sets using the root bag
+        for S, VC in MVCDict.items():
+            if len(VC) < len(bestVC):
+                bestVC = VC
+        return list(bestVC)
+
+    def vertex_cover_from_semi_ntd(self, T, rootNode):
+        """
+        TESTS:
+
+        The two algorithms should return the same result::
+
+           sage: g = graphs.RandomGNP(10, .5)
+           sage: vc1 = g.vertex_cover(algorithm="MILP")
+           sage: vc2 = g.vertex_cover_from_semi_ntd()
+           sage: len(vc1) == len(vc2)
+           True
+           sage: g.is_vertex_cover(vc2)
+           True
+
+        """
+    # def vertex_cover_from_ntd(self,T, rootNode):
+
+        g=self
+        TDedges = T.to_dictionary()
+        Gedges = g.to_dictionary()
+        V= set(g.vertices(False))
+
+        from itertools import combinations
+
+        def recurse(node,parent=None):
+
+            # Get adjacent nodes in the standard decomposition
+            adjEdges = TDedges[node]
+            bag=node.obj
+            if (parent is not None):
+                adjEdges.remove(parent)
+            # Leaf Node
+            if len(adjEdges) == 0:
+                newVCs = {}
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S in all_subsets:
+                    excludedNodes = bag - S
+                    edgeNotCovered = False
+                    # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                    for i in excludedNodes:
+                        excludedEdges = Gedges[i]
+                        for e in excludedEdges:
+                            # Checks if this subset S contains any edges within the bag that are not covered by S
+                            if (e in excludedNodes):
+                                edgeNotCovered = True
+                                break
+                        if (edgeNotCovered):
+                            break
+                    if (edgeNotCovered):
+                        newVCs[frozenset(S)] = V
+                    else:
+                        newVCs[frozenset(S)] = frozenset(S)
+                return newVCs
+            # Introduce node
+            if len(adjEdges) == 1 and len(node.obj) > len(adjEdges[0].obj):
+                # Check validity of introduce node i.e adjEdges[0].obj - node.obj == {}
+                newNodes = (bag - adjEdges[0].obj)
+
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S in all_subsets:
+                    # NOT HANDLING EMPTY SET?????
+                    excludedNodes = bag - S
+                    edgeNotCovered = False
+                    # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
+                    for i in excludedNodes:
+                        excludedEdges = Gedges[i]
+                        for e in excludedEdges:
+                            # Checks if this subset S contains any edges within the bag that are not covered by S
+                            if (e in excludedNodes):
+                                edgeNotCovered = True
+                                break
+                        if (edgeNotCovered):
+                            break
+                    if (edgeNotCovered):
+                        newVCs[frozenset(S)] = V
+                    else:
+                        # Check if there are any new nodes in the set which don't exist in the below bag
+                        if set(newNodes).isdisjoint(S) or len(S) == 0:
+                            newVCs[frozenset(S)] = CVC[frozenset(S)]
+                        else:
+                            newVCs[frozenset(S)] = set(CVC[frozenset(S-set(newNodes))]).union(S)
+                return newVCs
+            # Forget
+            if len(adjEdges) == 1 and len(node.obj) < len(adjEdges[0].obj):
+                # Valid vertex covers when the new node is included
+                newVCs = {}
+                CVC = recurse(adjEdges[0], node)
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                # Check CVC for all values of S
+                for S in all_subsets:
+                    excludedNodes = bag - S
+                    bestVC = V
+                    # Look through child bag's vertex covers, to find the smallest cover for this bag
+                    for S1, VC in CVC.items():
+                        if (S <= S1 and set(excludedNodes).isdisjoint(S1)):
+                            if len(VC) < len(bestVC):
+                                bestVC = VC
+                    newVCs[frozenset(S)] = bestVC
+                return newVCs
+            # Child Node is identical. This should not exist in a nice tree decomp and is here for debugging
+            if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
+                r= recurse(adjEdges[0],node)
+                return r
+            if len(adjEdges) >= 2:
+                newVCs = {}
+                childMVCs = []
+
+                for child in adjEdges:
+                    childMVCs.append(recurse(child,node))
+
+                all_subsets = []
+                input_list = list(bag)  # Convert the set to a list for indexing
+                
+                for subset_size in range(len(input_list) + 1):
+                    for subset in combinations(input_list, subset_size):
+                        all_subsets.append(set(subset))  # Convert the tuple back to a set
+                
+                for S1 in all_subsets:
+                    S= frozenset(S1)
+                    newVC = {}
+                    for MVC in childMVCs:
+                        newVC = set(newVC).union(set(MVC[S]))
+                    newVCs[S] = newVC
+                return newVCs
+            else:            
+                print("invalid")
+                raise ValueError("T is not a valid nice tree decomposition")
+
+        # Solves the problem for the root bag
+        MVCDict = recurse(node=rootNode)
+
+        bestVC = V
+        # Finds the smallest vertex cover formed from sets using the root bag
+        for S, VC in MVCDict.items():
+            if len(VC) < len(bestVC):
+                bestVC = VC
+        return list(bestVC)
+
     @doc_index("Algorithmically hard stuff")
     def independent_set(self, algorithm="Cliquer", value_only=False, reduction_rules=True,
                         solver=None, verbose=0, *, integrality_tolerance=1e-3):
@@ -7297,6 +7586,9 @@ class Graph(GenericGraph):
             # Reduction rules were sufficients to get the solution
             size_cover_g = 0
             cover_g = set()
+        elif algorithm == "NTD":
+            
+            print("TD LINK TO NTD => VERTEX COVER FUNCTION")
 
         elif algorithm == "Cliquer" or algorithm == "mcqd":
             if g.has_multiple_edges() and not reduction_rules:
@@ -10118,7 +10410,7 @@ class Graph(GenericGraph):
     from sage.graphs.asteroidal_triples import is_asteroidal_triple_free
     chromatic_polynomial = LazyImport('sage.graphs.chrompoly', 'chromatic_polynomial', at_startup=True)
     from sage.graphs.graph_decompositions.rankwidth import rank_decomposition
-    from sage.graphs.graph_decompositions.tree_decomposition import treewidth
+    from sage.graphs.graph_decompositions.tree_decomposition import treewidth, nice_tree_decomposition, semi_nice_tree_decomposition
     from sage.graphs.graph_decompositions.vertex_separation import pathwidth
     from sage.graphs.graph_decompositions.tree_decomposition import treelength
     from sage.graphs.graph_decompositions.clique_separators import atoms_and_clique_separators
@@ -10161,6 +10453,8 @@ _additional_categories = {
     "is_asteroidal_triple_free" : "Graph properties",
     "chromatic_polynomial"      : "Coloring",
     "rank_decomposition"        : "Algorithmically hard stuff",
+    "nice_tree_decomposition"   : "Algorithmically hard stuff",
+    "semi_nice_tree_decomposition"   : "Algorithmically hard stuff",
     "treewidth"                 : "Algorithmically hard stuff",
     "pathwidth"                 : "Algorithmically hard stuff",
     "treelength"                : "Algorithmically hard stuff",

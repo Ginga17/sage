@@ -1,0 +1,21 @@
+Compute Min Vertex Cover
+
+
+input : nice tree decomp
+
+Keep an list of all minimum vertex covers for each node. 
+
+
+If Leaf Node ()
+	return empty (1 vertex has no edges, hence no cover)
+if(introduce):
+	If v is the new vertex and C is the child Cover. 
+	Form v ∪ C 
+	| Compute
+	??? is the vertex cover of a parent  ever smaller then the child? 
+if(forget):
+	Vertex Cover is the same as child.
+
+if(Join node)
+	Viewing the 2 child vertices, for each pairing (u,v), generate the set t which maximises u ∩ v
+		i.e the biggest overlap of 2 valid Minimum Covers
