@@ -1515,6 +1515,7 @@ def RandomKTree(n, k, seed=None):
     for newVertex in range(k + 1, n):
         copiedClique = cliques[randint(0, len(cliques)-1)].copy()
         copiedClique[randint(0, k)] = newVertex
+
         cliques.append(copiedClique)
         for u in copiedClique:
             if u != newVertex:
