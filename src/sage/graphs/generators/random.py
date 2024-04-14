@@ -1494,6 +1494,9 @@ def RandomKTree(n, k, seed=None):
     
     if (n<k+1):
         raise ValueError("n must be greater than k + 1.")
+    
+    if seed is not None:
+        set_random_seed(seed)
 
     g = CompleteGraph(k+1)
     g.name("")
@@ -1544,14 +1547,14 @@ def RandomPartialKTree(n, k, x, seed=None):
 
     g = RandomKTree(n,k,seed)
 
-    # Check that x doesn't delete too many edges
-    if x > g.size():
-        raise ValueError("x must be less than the number of nodes in the K-Tree with `n` nodes.")
-    
-    for i in range(x):
-        randomEdge = g.random_edge()
-        g.delete_edge(randomEdge)
+    from sage.misc.prandom import shuffle
 
+    edges = list(g.edges())
+    # Deletes x random edges from the graph
+    shuffle(edges)
+    g.delete_edges(edges[:x])
+
+    g.name(f"Random partial {k}-tree")
     return g
 
 

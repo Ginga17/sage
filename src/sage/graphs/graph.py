@@ -6986,7 +6986,6 @@ class Graph(GenericGraph):
            True
 
         """
-    # def vertex_cover_from_ntd(self,T, rootNode):
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
@@ -7042,7 +7041,6 @@ class Graph(GenericGraph):
                 # Valid vertex covers when the new node is included
                 newVCs = {}
                 CVC = recurse(adjEdges[0], node)
-                all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
                 
                 for subset_size in range(len(input_list) + 1):
@@ -7068,7 +7066,6 @@ class Graph(GenericGraph):
                 
                 RightMVC = recurse(adjEdges[1], node)
 
-                all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
                 
                 for subset_size in range(len(input_list) + 1):
@@ -7108,8 +7105,6 @@ class Graph(GenericGraph):
            True
 
         """
-    # def vertex_cover_from_ntd(self,T, rootNode):
-
         g=self
         TDedges = T.to_dictionary()
         Gedges = g.to_dictionary()
@@ -7170,6 +7165,7 @@ class Graph(GenericGraph):
                     # NOT HANDLING EMPTY SET?????
                     excludedNodes = bag - S
                     edgeNotCovered = False
+                    # Check if a vertex cover for the bag is formed by S
                     # If the set made by bag - S contains edges, a vertex cover can't be found only using the nodes in S from the bag
                     for i in excludedNodes:
                         excludedEdges = Gedges[i]
@@ -7216,12 +7212,14 @@ class Graph(GenericGraph):
             if len(adjEdges) == 1 and node.obj == adjEdges[0].obj:
                 r= recurse(adjEdges[0],node)
                 return r
+            # Join node
             if len(adjEdges) >= 2:
                 newVCs = {}
-                childMVCs = []
+                # childMVCs = []
 
-                for child in adjEdges:
-                    childMVCs.append(recurse(child,node))
+                currMVC = recurse(adjEdges[0],node)
+                i = 1
+                
 
                 all_subsets = []
                 input_list = list(bag)  # Convert the set to a list for indexing
@@ -7230,13 +7228,16 @@ class Graph(GenericGraph):
                     for subset in combinations(input_list, subset_size):
                         all_subsets.append(set(subset))  # Convert the tuple back to a set
                 
-                for S1 in all_subsets:
-                    S= frozenset(S1)
-                    newVC = {}
-                    for MVC in childMVCs:
-                        newVC = set(newVC).union(set(MVC[S]))
-                    newVCs[S] = newVC
-                return newVCs
+                while (i< len(adjEdges)):
+                    newMVC = recurse(adjEdges[i],node)
+
+                    for S1 in all_subsets:
+                        S= frozenset(S1)
+                        # newVC = {}
+                        newVC = set(currMVC[S]).union(set(newMVC[S]))
+                        currMVC[S] = newVC
+                    i+=1
+                return currMVC
             else:            
                 print("invalid")
                 raise ValueError("T is not a valid nice tree decomposition")
@@ -7586,9 +7587,6 @@ class Graph(GenericGraph):
             # Reduction rules were sufficients to get the solution
             size_cover_g = 0
             cover_g = set()
-        elif algorithm == "NTD":
-            
-            print("TD LINK TO NTD => VERTEX COVER FUNCTION")
 
         elif algorithm == "Cliquer" or algorithm == "mcqd":
             if g.has_multiple_edges() and not reduction_rules:
@@ -10409,7 +10407,7 @@ class Graph(GenericGraph):
     from sage.graphs.asteroidal_triples import is_asteroidal_triple_free
     chromatic_polynomial = LazyImport('sage.graphs.chrompoly', 'chromatic_polynomial', at_startup=True)
     from sage.graphs.graph_decompositions.rankwidth import rank_decomposition
-    from sage.graphs.graph_decompositions.tree_decomposition import treewidth, nice_tree_decomposition, semi_nice_tree_decomposition
+    from sage.graphs.graph_decompositions.tree_decomposition import treewidth, nice_tree_decomposition, semi_nice_tree_decomposition, semi_nice_tree_decomposition2
     from sage.graphs.graph_decompositions.vertex_separation import pathwidth
     from sage.graphs.graph_decompositions.tree_decomposition import treelength
     from sage.graphs.graph_decompositions.clique_separators import atoms_and_clique_separators
@@ -10454,6 +10452,7 @@ _additional_categories = {
     "rank_decomposition"        : "Algorithmically hard stuff",
     "nice_tree_decomposition"   : "Algorithmically hard stuff",
     "semi_nice_tree_decomposition"   : "Algorithmically hard stuff",
+    "semi_nice_tree_decomposition2"   : "Algorithmically hard stuff",
     "treewidth"                 : "Algorithmically hard stuff",
     "pathwidth"                 : "Algorithmically hard stuff",
     "treelength"                : "Algorithmically hard stuff",

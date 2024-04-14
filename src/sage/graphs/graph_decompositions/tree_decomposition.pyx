@@ -609,18 +609,12 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
             # Adding forget nodes
             for i in missingFromChild:
                 currBag = Wrap(Set(prevBag.obj.set()-{i}))
-                #if (currBag == leftChild):
-                #    newEdges.append({prevBag,leftChild})
-                #else:
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
                     
             # Introduce Nodes
             for i in missingFromParent:
                 currBag = Wrap(prevBag.obj.union(Set({i})))
-                #if (currBag == leftChild):
-                #    newEdges.append({prevBag,leftChild})
-                #else:
                 newEdges.append({prevBag,currBag})
                 prevBag=currBag
 
@@ -635,7 +629,7 @@ def nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
         return ND, rootNode
     return ND
 
-
+# Version of sntd algo where join nodes have 2 or more children
 def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True):
     r"""
     Compute a nice tree decomposition of `g`.
@@ -706,11 +700,6 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
             adjEdges.remove(parent)
         # Leaf Node
         if len(adjEdges) == 0:
-            #if len(node.obj) == 1:
-            #    return [];
-            # Add forget node to transition to a leaf node with 1 element
-            ##else:
-            #    return [{node,Wrap({node.obj._an_element_()})}]
             return []
 
         # Add introduce and forget nodes to transition between current node and child
@@ -739,7 +728,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
 
             return newEdges
         # When node has 2 or more children, join nodes are added
-        else:            
+        else:
             newEdges = []
             currParent = node
 
@@ -768,8 +757,7 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
                     newEdges.append({duplicate, childNode})
 
                 # Finally  recurse to the child.
-                newEdges.extend(recurse(childNode,node.obj))
-                                 
+                newEdges.extend(recurse(childNode,node.obj))             
             return newEdges
 
     r = recurse(node=rootNode)
@@ -777,7 +765,6 @@ def semi_nice_tree_decomposition(g, k=None, kmin=None, algorithm=None, root=True
     if (root):
         return ND, rootNode
     return ND
-
 
 def treewidth(g, k=None, kmin=None, certificate=False, algorithm=None):
     r"""
